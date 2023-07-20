@@ -1,0 +1,32 @@
+---
+BasedOnStyle:  LLVM
+AlignConsecutiveDeclarations: true
+AlignConsecutiveAssignments: true
+ColumnLimit: 0
+IndentWidth: 4
+TabWidth: 4
+UseTab: ForContinuationAndIndentation
+
+---
+Language: Cpp
+AccessModifierOffset: -4
+AlignAfterOpenBracket: AlwaysBreak
+AllowShortFunctionsOnASingleLine: Inline
+BinPackArguments: false
+BreakConstructorInitializers: AfterColon
+BreakInheritanceList: AfterColon
+ColumnLimit: 100
+IncludeBlocks: Regroup
+IncludeCategories:
+- Regex: <[[:alnum:]_]+>
+  Priority: 1
+- Regex: <[[:alnum:].]+>
+  Priority: 2
+- Regex: ^<[[:alnum:]]+/
+  Priority: 3
+- Regex: ^"[[:alnum:]]+/
+  Priority: 4
+- Regex: .*
+  Priority: 5
+  SortPriority: 0
+PenaltyReturnTypeOnItsOwnLine: 200
