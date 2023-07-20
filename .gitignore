@@ -1,0 +1,15 @@
+# .gitignore
+#
+
+# build
+.build
+
+# local settings
+.local.env
+.vscode/
+
+# temporary files
+*.swo
+*.swp
+*~
+tmp/
