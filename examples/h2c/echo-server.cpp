@@ -68,17 +68,17 @@ void on_conn(uv_stream_t *stream, int status) {
 void on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf) {
 	if (nread < 0) {
 		if (nread != UV_EOF) {
-			fprintf(stderr, "Read error: %s\n", uv_err_name(nread));
+			std::fprintf(stderr, "Read error: %s\n", uv_err_name(nread));
 		}
 
 		uv_close((uv_handle_t *)stream, on_close);
-		delete buf->base;
+		delete[] buf->base;
 		return;
 	}
 
 	auto *ctx = reinterpret_cast<h2_context_t *>(stream->data);
 	auto  n   = nghttp2_session_mem_recv(ctx->session, (const uint8_t *)buf->base, nread);
-	delete buf->base;
+	delete[] buf->base;
 
 	if (n < 0) {
 		std::fprintf(stderr, "Fatal error: %s\n", nghttp2_strerror(static_cast<int>(n)));
@@ -100,7 +100,7 @@ void on_write(uv_write_t *req, int status) {
 	}
 
 	auto *buf = reinterpret_cast<char *>(req->data);
-	delete buf;
+	delete[] buf;
 
 	delete req;
 }
