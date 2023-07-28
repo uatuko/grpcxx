@@ -5,12 +5,14 @@
 
 #include <uv.h>
 
-namespace grpcxx {
+#include "status.h"
 
+namespace grpcxx {
 // Forward declarations
 namespace h2 {
 class conn;
 struct event;
+class stream;
 } // namespace h2
 
 class server {
@@ -28,6 +30,8 @@ private:
 
 	void   listen(const h2::event &ev);
 	size_t write(uv_stream_t *handle, const uint8_t *data, size_t size);
+
+	void send(std::shared_ptr<h2::stream> stream, const status &s);
 
 	uv_tcp_t  _handle;
 	uv_loop_t _loop;

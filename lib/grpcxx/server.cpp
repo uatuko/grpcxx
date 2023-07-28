@@ -2,6 +2,8 @@
 
 #include "h2/conn.h"
 
+#include "status.h"
+
 namespace grpcxx {
 server::server() {
 	// TODO: error handling
@@ -61,6 +63,7 @@ void server::listen(const h2::event &ev) {
 			std::printf("  %s: %s\n", name.c_str(), value.c_str());
 		}
 
+		send(ev.stream, status(status::code_t::unimplemented));
 		break;
 	}
 
@@ -95,6 +98,16 @@ void server::run(const std::string_view &ip, int port) {
 	uv_listen(reinterpret_cast<uv_stream_t *>(&_handle), 128, conn_cb);
 
 	uv_run(&_loop, UV_RUN_DEFAULT);
+}
+
+void server::send(std::shared_ptr<h2::stream> stream, const status &s) {
+	stream->send(
+		{
+			{":status", "200"},
+			{"content-type", "application/grpc"},
+			{"grpc-status", s},
+		},
+		{});
 }
 
 size_t server::write(uv_stream_t *handle, const uint8_t *data, size_t size) {

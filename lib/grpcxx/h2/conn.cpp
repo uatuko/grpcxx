@@ -89,7 +89,8 @@ int conn::header_cb(
 	const uint8_t *value, size_t valuelen, uint8_t flags, void *vconn) {
 	auto *conn = static_cast<class conn *>(vconn);
 	if (!conn->_streams.contains(frame->hd.stream_id)) {
-		conn->_streams.insert({frame->hd.stream_id, std::make_shared<stream>(frame->hd.stream_id)});
+		conn->_streams.insert(
+			{frame->hd.stream_id, std::make_shared<stream>(frame->hd.stream_id, conn->_session)});
 	}
 
 	auto &stream = conn->_streams.at(frame->hd.stream_id);

@@ -6,6 +6,7 @@ target_sources(grpcxx
 		FILE_SET headers TYPE HEADERS
 		FILES
 			server.h
+			status.h
 )
 
 # h2 sources

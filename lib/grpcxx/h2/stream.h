@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+#include <nghttp2/nghttp2.h>
+
 namespace grpcxx {
 namespace h2 {
 class stream {
@@ -12,15 +14,18 @@ public:
 	using headers_t = std::map<std::string, std::string>;
 	using id_t      = int32_t;
 
-	stream(const id_t &id);
+	stream(const id_t &id, nghttp2_session *session) noexcept;
 
 	data_t    data;
 	headers_t headers;
 
 	const id_t id() const noexcept { return _id; }
 
+	void send(const headers_t &headers, const data_t &data) const;
+
 private:
-	id_t _id;
+	id_t             _id;
+	nghttp2_session *_session;
 };
 } // namespace h2
 } // namespace grpcxx
