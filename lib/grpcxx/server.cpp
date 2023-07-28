@@ -16,7 +16,7 @@ void server::alloc_cb(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf)
 
 void server::close_cb(uv_handle_t *handle) {
 	if (handle->data != nullptr) {
-		auto *conn = reinterpret_cast<h2::conn *>(handle->data);
+		auto *conn = static_cast<h2::conn *>(handle->data);
 		delete conn;
 	}
 
@@ -34,11 +34,11 @@ void server::conn_cb(uv_stream_t *server, int status) {
 	}
 
 	h2::conn::listener_t listener = std::bind(
-		&server::listen, reinterpret_cast<class server *>(server->data), std::placeholders::_1);
+		&server::listen, static_cast<class server *>(server->data), std::placeholders::_1);
 
 	h2::conn::writer_t writer = std::bind(
 		&server::write,
-		reinterpret_cast<class server *>(server->data),
+		static_cast<class server *>(server->data),
 		reinterpret_cast<uv_stream_t *>(handle),
 		std::placeholders::_1,
 		std::placeholders::_2);
@@ -70,7 +70,7 @@ void server::listen(const h2::event &ev) {
 }
 
 void server::read_cb(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf) {
-	auto *conn = reinterpret_cast<h2::conn *>(stream->data);
+	auto *conn = static_cast<h2::conn *>(stream->data);
 	if (nread < 0) {
 		if (nread != UV_EOF) {
 			// FIXME: handle errors
@@ -124,7 +124,7 @@ void server::write_cb(uv_write_t *req, int status) {
 		std::fprintf(stderr, "Write error: %s\n", uv_strerror(status));
 	}
 
-	auto *buf = reinterpret_cast<char *>(req->data);
+	auto *buf = static_cast<char *>(req->data);
 	delete[] buf;
 
 	delete req;

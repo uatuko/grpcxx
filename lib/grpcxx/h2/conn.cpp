@@ -38,7 +38,7 @@ conn::~conn() {
 int conn::data_recv_cb(
 	nghttp2_session *session, uint8_t flags, int32_t stream_id, const uint8_t *data, size_t len,
 	void *vconn) {
-	auto *conn   = reinterpret_cast<class conn *>(vconn);
+	auto *conn   = static_cast<class conn *>(vconn);
 	auto &stream = conn->_streams.at(stream_id);
 
 	stream->data.insert(stream->data.end(), data, data + len);
@@ -46,7 +46,7 @@ int conn::data_recv_cb(
 }
 
 int conn::frame_recv_cb(nghttp2_session *session, const nghttp2_frame *frame, void *vconn) {
-	auto *conn = reinterpret_cast<class conn *>(vconn);
+	auto *conn = static_cast<class conn *>(vconn);
 	if (!conn->_streams.contains(frame->hd.stream_id)) {
 		return 0;
 	}
@@ -87,7 +87,7 @@ int conn::frame_recv_cb(nghttp2_session *session, const nghttp2_frame *frame, vo
 int conn::header_cb(
 	nghttp2_session *session, const nghttp2_frame *frame, const uint8_t *name, size_t namelen,
 	const uint8_t *value, size_t valuelen, uint8_t flags, void *vconn) {
-	auto *conn = reinterpret_cast<class conn *>(vconn);
+	auto *conn = static_cast<class conn *>(vconn);
 	if (!conn->_streams.contains(frame->hd.stream_id)) {
 		conn->_streams.insert({frame->hd.stream_id, std::make_shared<stream>(frame->hd.stream_id)});
 	}
@@ -118,7 +118,7 @@ void conn::send() {
 
 ssize_t conn::send_cb(
 	nghttp2_session *session, const uint8_t *data, size_t length, int flags, void *vconn) {
-	auto *conn = reinterpret_cast<class conn *>(vconn);
+	auto *conn = static_cast<class conn *>(vconn);
 	return conn->_writer(data, length);
 }
 } // namespace h2
