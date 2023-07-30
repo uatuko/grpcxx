@@ -5,7 +5,10 @@ target_sources(grpcxx
 	PUBLIC
 		FILE_SET headers TYPE HEADERS
 		FILES
+			fixed_string.h
+			rpc.h
 			server.h
+			service.h
 			status.h
 )
 
