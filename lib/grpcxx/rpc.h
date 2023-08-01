@@ -11,15 +11,12 @@ namespace grpcxx {
 template <fixed_string M, typename T, typename U> struct rpc {
 	static constexpr std::string_view method{M};
 
+	using method_type   = fixed_string_t<M>;
 	using request_type  = T;
 	using response_type = U;
 
 	using optional_response_type = std::optional<response_type>;
 	using result_type            = std::pair<status, optional_response_type>;
-
-	std::function<result_type(const request_type &)> fn = [](const auto &) {
-		return result_type(status::code_t::unimplemented, std::nullopt);
-	};
 
 	request_type map(const std::string &data) const {
 		constexpr bool can_map = requires(request_type t) {

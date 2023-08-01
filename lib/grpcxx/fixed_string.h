@@ -7,9 +7,9 @@ namespace detail {
 template <class CharT, std::size_t N> struct basic_fixed_string {
 	using value_type = CharT;
 
-	template <class T>
-	requires std::same_as<T, value_type>
-	constexpr basic_fixed_string(const T (&str)[N + 1]) noexcept { std::copy_n(str, N + 1, value); }
+	constexpr basic_fixed_string(const value_type (&str)[N + 1]) noexcept {
+		std::copy_n(str, N + 1, value);
+	}
 
 	constexpr operator std::basic_string_view<value_type>() const noexcept { return view(); }
 
@@ -34,4 +34,6 @@ template <std::size_t N> struct fixed_string : detail::basic_fixed_string<char, 
 	constexpr fixed_string(const char (&str)[N]) noexcept :
 		detail::basic_fixed_string<char, N - 1>(str) {}
 };
+
+template <fixed_string T> struct fixed_string_t {};
 } // namespace grpcxx

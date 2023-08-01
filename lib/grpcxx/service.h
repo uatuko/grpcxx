@@ -26,12 +26,11 @@ concept rpc_type = requires(T t) {
 		t.map(std::declval<const typename T::optional_response_type &>())
 		} -> std::same_as<std::string>;
 
-	// Handler
-	{t.fn};
-	requires std::same_as < decltype(t.fn),
-		std::function <
-			std::pair<status, typename T::optional_response_type>(const typename T::request_type &)
-	>> ;
+	// Result
+	typename T::result_type;
+	requires std::same_as<
+		typename T::result_type,
+		std::pair<grpcxx::status, typename T::optional_response_type>>;
 };
 } // namespace concepts
 
@@ -43,8 +42,25 @@ public:
 	using handler_t  = std::function<response_t(const data_t &)>;
 	using handlers_t = std::unordered_map<std::string_view, handler_t>;
 
-	constexpr service() {
-		std::apply([&](auto &&...args) { (make_handler(args), ...); }, _methods);
+	template <typename I> constexpr service(I &impl) {
+		std::apply(
+			[&](auto &&...args) {
+				auto helper = [&](const auto &rpc) {
+					auto handler = [&impl, &rpc](const data_t &data) -> response_t {
+						using type = std::remove_cvref_t<decltype(rpc)>;
+
+						auto req    = rpc.map(data);
+						auto result = std::invoke(&I::template call<type>, impl, req);
+
+						return {result.first, rpc.map(result.second)};
+					};
+
+					_handlers.insert({rpc.method, handler});
+				};
+
+				(helper(args), ...);
+			},
+			std::tuple<R...>());
 	}
 
 	response_t call(std::string_view method, const std::string &data) {
@@ -56,35 +72,7 @@ public:
 		return it->second(data);
 	}
 
-	template <fixed_string M> constexpr void rpc(const auto &fn) {
-		constexpr bool found = ((R::method == M) || ...);
-		static_assert(found, "Method not found in service");
-
-		std::apply([&](auto &&...args) { (rpc_helper<M>(args, fn) || ...); }, _methods);
-	}
-
 private:
-	constexpr void make_handler(const auto &rpc) {
-		auto handler = [&rpc](const data_t &data) -> response_t {
-			auto req    = rpc.map(data);
-			auto result = rpc.fn(req);
-
-			return {result.first, rpc.map(result.second)};
-		};
-
-		_handlers.insert({rpc.method, handler});
-	}
-
-	template <fixed_string M> constexpr bool rpc_helper(auto &&rpc, auto &&fn) {
-		if constexpr (M == std::remove_reference_t<decltype(rpc)>::method) {
-			rpc.fn = fn;
-			return true;
-		}
-
-		return false;
-	}
-
-	handlers_t       _handlers;
-	std::tuple<R...> _methods;
+	handlers_t _handlers;
 };
 } // namespace grpcxx
