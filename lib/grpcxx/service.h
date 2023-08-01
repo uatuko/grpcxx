@@ -5,6 +5,7 @@
 #include <tuple>
 #include <unordered_map>
 
+#include "fixed_string.h"
 #include "status.h"
 
 namespace grpcxx {
@@ -34,7 +35,7 @@ concept rpc_type = requires(T t) {
 };
 } // namespace concepts
 
-template <concepts::rpc_type... R> class service {
+template <fixed_string N, concepts::rpc_type... R> class service {
 public:
 	using data_t     = std::string;
 	using response_t = std::pair<status, data_t>;
@@ -71,6 +72,8 @@ public:
 
 		return it->second(data);
 	}
+
+	constexpr std::string_view name() const noexcept { return {N}; };
 
 private:
 	handlers_t _handlers;

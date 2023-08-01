@@ -9,6 +9,8 @@ server::server() {
 	// TODO: error handling
 	uv_loop_init(&_loop);
 	uv_tcp_init(&_loop, &_handle);
+
+	_handle.data = this;
 }
 
 void server::alloc_cb(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf) {
@@ -52,22 +54,57 @@ void server::conn_cb(uv_stream_t *server, int status) {
 }
 
 void server::listen(const h2::event &ev) {
+	// FIXME: use `h2::event_type::headers` events to stop processing early
 	switch (ev.type) {
-	case h2::event_type::data:
-		std::printf("[data] size: %zu\n  %s\n", ev.stream->data.size(), ev.stream->data.data());
+	case h2::event_type::eos: {
+		// FIXME: only for debugging
+		{
+			for (const auto &[name, value] : ev.stream->headers) {
+				std::printf("  %s: %s\n", name.c_str(), value.c_str());
+			}
 
-		break;
-
-	case h2::event_type::headers: {
-		for (const auto &[name, value] : ev.stream->headers) {
-			std::printf("  %s: %s\n", name.c_str(), value.c_str());
+			std::printf("[data] size: %zu\n  %s\n", ev.stream->data.size(), ev.stream->data.data());
 		}
 
-		send(ev.stream, status(status::code_t::unimplemented));
+		auto it = ev.stream->headers.find(":path");
+		if (it == ev.stream->headers.end()) {
+			send(ev.stream, {status::code_t::not_found});
+			break;
+		}
+
+		// :path = /service.name/MethodName
+		// FIXME: validate path
+		auto svc_name    = it->second.substr(1, it->second.find("/", 1) - 1);
+		auto method_name = it->second.substr(svc_name.size() + 2);
+
+		auto svc_it = _services.find(svc_name);
+		if (svc_it == _services.end()) {
+			send(ev.stream, {status::code_t::not_found});
+			break;
+		}
+
+		// FIXME: validate length-prefixed message data
+		const auto &raw_data = ev.stream->data;
+		uint8_t     encoded  = raw_data[0];
+		uint32_t    size =
+			(raw_data[1] << 24) | (raw_data[2] << 16) | (raw_data[3] << 8) | (raw_data[4]);
+
+		try {
+			auto result = svc_it->second(method_name, raw_data.substr(5));
+
+			// FIXME: actually send response data
+			send(ev.stream, result.first, result.second);
+		} catch (std::exception &e) {
+			// FIXME: handle errors
+			std::fprintf(stderr, "Error: %s\n", e.what());
+			send(ev.stream, {status::code_t::internal});
+		}
+
 		break;
 	}
 
 	default:
+		std::printf("server::listen(), event: %d\n", ev.type);
 		break;
 	}
 }
@@ -100,14 +137,39 @@ void server::run(const std::string_view &ip, int port) {
 	uv_run(&_loop, UV_RUN_DEFAULT);
 }
 
-void server::send(std::shared_ptr<h2::stream> stream, const status &s) {
-	stream->send(
-		{
+void server::send(std::shared_ptr<h2::stream> stream, const status &s, const data_t &msg) {
+	// Headers
+	{
+		stream->send({
 			{":status", "200"},
 			{"content-type", "application/grpc"},
+		});
+	}
+
+	// Length-prefixed message
+	if (msg.size() > 0) {
+		data_t data;
+		data.reserve(msg.size() + 5);
+
+		std::array<data_t::value_type, 5> bytes;
+		bytes[0] = 0x00;
+		bytes[1] = (static_cast<uint32_t>(msg.size()) >> 24) & 0xff;
+		bytes[2] = (static_cast<uint32_t>(msg.size()) >> 16) & 0xff;
+		bytes[3] = (static_cast<uint32_t>(msg.size()) >> 8) & 0xff;
+		bytes[4] = static_cast<uint32_t>(msg.size()) & 0xff;
+
+		data.append(bytes.data(), bytes.size());
+		data.append(msg);
+
+		stream->send(data);
+	}
+
+	// Trailers
+	stream->send(
+		{
 			{"grpc-status", s},
 		},
-		{});
+		true);
 }
 
 size_t server::write(uv_stream_t *handle, const uint8_t *data, size_t size) {
