@@ -30,3 +30,6 @@ target_include_directories(nghttp2_static
 		$<BUILD_INTERFACE:${nghttp2_SOURCE_DIR}/lib/includes>
 )
 add_library(libnghttp2::nghttp2 ALIAS nghttp2_static)
+
+# protobuf
+find_package(Protobuf REQUIRED)
