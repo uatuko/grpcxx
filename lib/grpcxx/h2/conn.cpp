@@ -4,8 +4,8 @@
 
 namespace grpcxx {
 namespace h2 {
-conn::conn(listener_t &&listener, writer_t &&writer) :
-	_listener(std::move(listener)), _writer(std::move(writer)) {
+conn::conn(event_cb_t &&event_cb, write_cb_t &&write_cb) :
+	_event_cb(std::move(event_cb)), _write_cb(std::move(write_cb)) {
 	// Initialise HTTP/2 session
 	nghttp2_session_callbacks *callbacks;
 	nghttp2_session_callbacks_new(&callbacks);
@@ -41,7 +41,7 @@ int conn::data_recv_cb(
 	auto *conn   = static_cast<class conn *>(vconn);
 	auto &stream = conn->_streams.at(stream_id);
 
-	stream->data.insert(stream->data.end(), data, data + len);
+	stream->data.append(data, data + len);
 	return 0;
 }
 
@@ -55,7 +55,7 @@ int conn::frame_recv_cb(nghttp2_session *session, const nghttp2_frame *frame, vo
 	case NGHTTP2_DATA: {
 		conn->emit({
 			.stream = conn->_streams.at(frame->hd.stream_id),
-			.type   = event_type::data,
+			.type   = event::type_t::stream_data,
 		});
 
 		break;
@@ -64,7 +64,7 @@ int conn::frame_recv_cb(nghttp2_session *session, const nghttp2_frame *frame, vo
 	case NGHTTP2_HEADERS: {
 		conn->emit({
 			.stream = conn->_streams.at(frame->hd.stream_id),
-			.type   = event_type::headers,
+			.type   = event::type_t::stream_headers,
 		});
 
 		break;
@@ -77,7 +77,7 @@ int conn::frame_recv_cb(nghttp2_session *session, const nghttp2_frame *frame, vo
 	if (0 != (frame->hd.flags & NGHTTP2_FLAG_END_STREAM)) {
 		conn->emit({
 			.stream = conn->_streams.at(frame->hd.stream_id),
-			.type   = event_type::eos,
+			.type   = event::type_t::stream_end,
 		});
 	}
 
@@ -120,7 +120,7 @@ void conn::send() {
 ssize_t conn::send_cb(
 	nghttp2_session *session, const uint8_t *data, size_t length, int flags, void *vconn) {
 	auto *conn = static_cast<class conn *>(vconn);
-	return conn->_writer(data, length);
+	return conn->_write_cb(data, length);
 }
 } // namespace h2
 } // namespace grpcxx

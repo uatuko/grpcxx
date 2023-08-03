@@ -37,26 +37,26 @@ void server::conn_cb(uv_stream_t *server, int status) {
 		return;
 	}
 
-	h2::conn::listener_t listener = std::bind(
-		&server::listen, static_cast<class server *>(server->data), std::placeholders::_1);
+	h2::conn::event_cb_t event_cb =
+		std::bind(&server::event, static_cast<class server *>(server->data), std::placeholders::_1);
 
-	h2::conn::writer_t writer = std::bind(
+	h2::conn::write_cb_t write_cb = std::bind(
 		&server::write,
 		static_cast<class server *>(server->data),
 		reinterpret_cast<uv_stream_t *>(handle),
 		std::placeholders::_1,
 		std::placeholders::_2);
 
-	auto *conn = new h2::conn(std::move(listener), std::move(writer));
+	auto *conn = new h2::conn(std::move(event_cb), std::move(write_cb));
 
 	handle->data = conn;
 	uv_read_start(reinterpret_cast<uv_stream_t *>(handle), alloc_cb, read_cb);
 }
 
-void server::listen(const h2::event &ev) {
-	// FIXME: use `h2::event_type::headers` events to stop processing early
+void server::event(const h2::event &ev) {
+	// FIXME: use `h2::event::type_t::stream_headers` events to stop processing early
 	switch (ev.type) {
-	case h2::event_type::eos: {
+	case h2::event::type_t::stream_end: {
 		// FIXME: only for debugging
 		{
 			for (const auto &[name, value] : ev.stream->headers) {
@@ -96,7 +96,7 @@ void server::listen(const h2::event &ev) {
 			send(ev.stream, result.first, result.second);
 		} catch (std::exception &e) {
 			// FIXME: handle errors
-			std::fprintf(stderr, "Error: %s\n", e.what());
+			std::fprintf(stderr, "server::listen(), error: %s\n", e.what());
 			send(ev.stream, {status::code_t::internal});
 		}
 
@@ -104,7 +104,7 @@ void server::listen(const h2::event &ev) {
 	}
 
 	default:
-		std::printf("server::listen(), event: %d\n", ev.type);
+		std::printf("server::listen(), event: %hhu\n", ev.type);
 		break;
 	}
 }
@@ -114,7 +114,7 @@ void server::read_cb(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf) {
 	if (nread < 0) {
 		if (nread != UV_EOF) {
 			// FIXME: handle errors
-			std::fprintf(stderr, "Read error: %s\n", uv_err_name(nread));
+			std::fprintf(stderr, "server::read_cb(), error: %s\n", uv_err_name(nread));
 		}
 
 		uv_close(reinterpret_cast<uv_handle_t *>(stream), close_cb);
@@ -149,7 +149,7 @@ void server::send(std::shared_ptr<h2::stream> stream, const status &s, const dat
 	// Length-prefixed message
 	if (msg.size() > 0) {
 		data_t data;
-		data.reserve(msg.size() + 5);
+		data.reserve(5 + msg.size());
 
 		std::array<data_t::value_type, 5> bytes;
 		bytes[0] = 0x00;
@@ -183,7 +183,7 @@ size_t server::write(uv_stream_t *handle, const uint8_t *data, size_t size) {
 	auto r      = uv_write(req, handle, &uv_buf, 1, write_cb);
 	if (r != 0) {
 		// FIXME: handle errors
-		std::fprintf(stderr, "uv_write() error: %s\n", uv_strerror(r));
+		std::fprintf(stderr, "server::write(), error: %s\n", uv_strerror(r));
 
 		delete[] buf;
 		delete req;
@@ -196,7 +196,7 @@ size_t server::write(uv_stream_t *handle, const uint8_t *data, size_t size) {
 void server::write_cb(uv_write_t *req, int status) {
 	if (status) {
 		// FIXME: handle errors
-		std::fprintf(stderr, "Write error: %s\n", uv_strerror(status));
+		std::fprintf(stderr, "server::write_cb(), error: %s\n", uv_strerror(status));
 	}
 
 	auto *buf = static_cast<char *>(req->data);

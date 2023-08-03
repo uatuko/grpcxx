@@ -13,10 +13,10 @@ class conn {
 public:
 	using streams_t = std::map<stream::id_t, std::shared_ptr<stream>>;
 
-	using listener_t = std::function<void(const event &)>;
-	using writer_t   = std::function<size_t(const uint8_t *, size_t)>;
+	using event_cb_t = std::function<void(const event &)>;
+	using write_cb_t = std::function<size_t(const uint8_t *, size_t)>;
 
-	conn(listener_t &&listener, writer_t &&writer);
+	conn(event_cb_t &&event_cb, write_cb_t &&write_cb);
 	~conn();
 
 	void recv(const uint8_t *in, size_t size);
@@ -36,13 +36,13 @@ private:
 	static ssize_t send_cb(
 		nghttp2_session *session, const uint8_t *data, size_t length, int flags, void *vconn);
 
-	inline void emit(const event &ev) { _listener(ev); }
+	void emit(const event &ev) { _event_cb(ev); }
 
 	nghttp2_session *_session;
 	streams_t        _streams;
 
-	listener_t _listener;
-	writer_t   _writer;
+	event_cb_t _event_cb;
+	write_cb_t _write_cb;
 };
 } // namespace h2
 } // namespace grpcxx

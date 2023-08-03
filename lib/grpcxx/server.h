@@ -40,7 +40,7 @@ private:
 	static void read_cb(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf);
 	static void write_cb(uv_write_t *req, int status);
 
-	void   listen(const h2::event &ev);
+	void   event(const h2::event &ev);
 	size_t write(uv_stream_t *handle, const uint8_t *data, size_t size);
 
 	void send(std::shared_ptr<h2::stream> stream, const status &s, const data_t &msg = {});
