@@ -57,54 +57,19 @@ void server::event(const h2::event &ev) {
 	// FIXME: use `h2::event::type_t::stream_headers` events to stop processing early
 	switch (ev.type) {
 	case h2::event::type_t::stream_end: {
-		// FIXME: only for debugging
-		{
-			for (const auto &[name, value] : ev.stream->headers) {
-				std::printf("  %s: %s\n", name.c_str(), value.c_str());
-			}
+		auto *w = new worker_t({
+			.server = this,
+			.stream = ev.stream,
+		});
 
-			std::printf("[data] size: %zu\n  %s\n", ev.stream->data.size(), ev.stream->data.data());
-		}
-
-		auto it = ev.stream->headers.find(":path");
-		if (it == ev.stream->headers.end()) {
-			send(ev.stream, {status::code_t::not_found});
-			break;
-		}
-
-		// :path = /service.name/MethodName
-		// FIXME: validate path
-		auto svc_name    = it->second.substr(1, it->second.find("/", 1) - 1);
-		auto method_name = it->second.substr(svc_name.size() + 2);
-
-		auto svc_it = _services.find(svc_name);
-		if (svc_it == _services.end()) {
-			send(ev.stream, {status::code_t::not_found});
-			break;
-		}
-
-		// FIXME: validate length-prefixed message data
-		const auto &raw_data = ev.stream->data;
-		uint8_t     encoded  = raw_data[0];
-		uint32_t    size =
-			(raw_data[1] << 24) | (raw_data[2] << 16) | (raw_data[3] << 8) | (raw_data[4]);
-
-		try {
-			auto result = svc_it->second(method_name, raw_data.substr(5));
-
-			// FIXME: actually send response data
-			send(ev.stream, result.first, result.second);
-		} catch (std::exception &e) {
-			// FIXME: handle errors
-			std::fprintf(stderr, "server::listen(), error: %s\n", e.what());
-			send(ev.stream, {status::code_t::internal});
-		}
+		auto *req = new uv_work_t();
+		req->data = w;
+		uv_queue_work(&_loop, req, w->work_cb, w->work_done_cb);
 
 		break;
 	}
 
 	default:
-		std::printf("server::listen(), event: %hhu\n", ev.type);
 		break;
 	}
 }
@@ -137,7 +102,7 @@ void server::run(const std::string_view &ip, int port) {
 	uv_run(&_loop, UV_RUN_DEFAULT);
 }
 
-void server::send(std::shared_ptr<h2::stream> stream, const status &s, const data_t &msg) {
+void server::send(std::shared_ptr<h2::stream> stream, const status &s, const data_t &msg) const {
 	// Headers
 	{
 		stream->send({
@@ -202,6 +167,58 @@ void server::write_cb(uv_write_t *req, int status) {
 	auto *buf = static_cast<char *>(req->data);
 	delete[] buf;
 
+	delete req;
+}
+
+void server::worker_t::work_cb(uv_work_t *req) {
+	auto *w = static_cast<worker_t *>(req->data);
+
+	auto it = w->stream->headers.find(":path");
+	if (it == w->stream->headers.end()) {
+		w->result = {status::code_t::not_found, {}};
+		return;
+	}
+
+	// :path = /service.name/MethodName
+	// FIXME: validate path
+	auto svc_name    = it->second.substr(1, it->second.find("/", 1) - 1);
+	auto method_name = it->second.substr(svc_name.size() + 2);
+
+	auto svc_it = w->server->services().find(svc_name);
+	if (svc_it == w->server->services().end()) {
+		w->result = {status::code_t::not_found, {}};
+		return;
+	}
+
+	// FIXME: validate length-prefixed message data
+	const auto &raw_data = w->stream->data;
+	uint8_t     encoded  = raw_data[0];
+	uint32_t size = (raw_data[1] << 24) | (raw_data[2] << 16) | (raw_data[3] << 8) | (raw_data[4]);
+
+	try {
+		w->result = svc_it->second(method_name, raw_data.substr(5));
+	} catch (std::exception &e) {
+		// FIXME: handle errors
+		std::fprintf(stderr, "server::listen(), error: %s\n", e.what());
+		w->result = {status::code_t::internal, {}};
+	}
+}
+
+void server::worker_t::work_done_cb(uv_work_t *req, int status) {
+	auto *w = static_cast<worker_t *>(req->data);
+
+	// FIXME: handle errors
+	if (status != 0) {
+		std::fprintf(stderr, "server::worker_t::work_done_cb(), error: %s\n", uv_strerror(status));
+
+		delete w;
+		delete req;
+		return;
+	}
+
+	w->server->send(w->stream, std::get<0>(w->result), std::get<1>(w->result));
+
+	delete w;
 	delete req;
 }
 } // namespace grpcxx
