@@ -14,8 +14,12 @@ server::server() {
 }
 
 void server::alloc_cb(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf) {
-	buf->base = new char[suggested_size]();
-	buf->len  = suggested_size;
+	// FIXME: use a pre-allocated buffer instead of allocating memory for each callback?
+	// Notes: Ref: https://docs.libuv.org/en/v1.x/handle.html#c.uv_alloc_cb
+	//        If the buffer has no space (buf->len = 0), UV_ENOBUFS error could be handled
+	//        in server::read_cb() to pause reading?
+	buf->base = new char[1024]();
+	buf->len  = 1024;
 }
 
 void server::close_cb(uv_handle_t *handle) {
