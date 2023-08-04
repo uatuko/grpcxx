@@ -13,6 +13,7 @@ conn::conn(event_cb_t &&event_cb, write_cb_t &&write_cb) :
 	nghttp2_session_callbacks_set_on_header_callback(callbacks, header_cb);
 	nghttp2_session_callbacks_set_on_data_chunk_recv_callback(callbacks, data_recv_cb);
 	nghttp2_session_callbacks_set_on_frame_recv_callback(callbacks, frame_recv_cb);
+	nghttp2_session_callbacks_set_on_stream_close_callback(callbacks, stream_close_cb);
 	nghttp2_session_callbacks_set_send_callback(callbacks, send_cb);
 
 	nghttp2_session_server_new(&_session, callbacks, this);
@@ -22,7 +23,7 @@ conn::conn(event_cb_t &&event_cb, write_cb_t &&write_cb) :
 	// Send HTTP/2 client connection header
 	std::array<nghttp2_settings_entry, 1> iv = {
 		// FIXME: make concurrent streams configurable (and default to more than 1?)
-		{NGHTTP2_SETTINGS_MAX_CONCURRENT_STREAMS, 1},
+		{NGHTTP2_SETTINGS_MAX_CONCURRENT_STREAMS, 8},
 	};
 
 	auto r = nghttp2_submit_settings(_session, NGHTTP2_FLAG_NONE, iv.data(), iv.size());
@@ -121,6 +122,13 @@ ssize_t conn::send_cb(
 	nghttp2_session *session, const uint8_t *data, size_t length, int flags, void *vconn) {
 	auto *conn = static_cast<class conn *>(vconn);
 	return conn->_write_cb(data, length);
+}
+
+int conn::stream_close_cb(
+	nghttp2_session *session, int32_t stream_id, uint32_t error_code, void *vconn) {
+	auto *conn = static_cast<class conn *>(vconn);
+	conn->_streams.erase(stream_id);
+	return 0;
 }
 } // namespace h2
 } // namespace grpcxx

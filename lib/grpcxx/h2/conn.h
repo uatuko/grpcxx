@@ -36,6 +36,9 @@ private:
 	static ssize_t send_cb(
 		nghttp2_session *session, const uint8_t *data, size_t length, int flags, void *vconn);
 
+	static int stream_close_cb(
+		nghttp2_session *session, int32_t stream_id, uint32_t error_code, void *vconn);
+
 	void emit(const event &ev) { _event_cb(ev); }
 
 	nghttp2_session *_session;
