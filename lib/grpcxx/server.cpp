@@ -92,6 +92,8 @@ void server::read_cb(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf) {
 	}
 
 	conn->recv(reinterpret_cast<const uint8_t *>(buf->base), nread);
+	delete[] buf->base;
+
 	conn->send();
 }
 
