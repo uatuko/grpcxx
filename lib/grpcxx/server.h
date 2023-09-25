@@ -3,17 +3,18 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
-#include <vector>
 
 #include <uv.h>
 
 #include "service.h"
-#include "status.h"
 
 namespace grpcxx {
 // Forward declarations
+namespace detail {
+struct task;
+} // namespace detail
+
 namespace h2 {
-class conn;
 struct event;
 class stream;
 } // namespace h2
@@ -36,26 +37,9 @@ public:
 	void run(const std::string_view &ip, int port);
 
 private:
-	struct worker_t {
-		const server *server;
+	static void conn_cb(uv_stream_t *stream, int status);
 
-		std::pair<status, data_t>   result;
-		std::shared_ptr<h2::stream> stream;
-
-		static void work_cb(uv_work_t *req);
-		static void work_done_cb(uv_work_t *req, int status);
-	};
-
-	static void alloc_cb(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf);
-	static void close_cb(uv_handle_t *handle);
-	static void conn_cb(uv_stream_t *server, int status);
-	static void read_cb(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf);
-	static void write_cb(uv_write_t *req, int status);
-
-	void   event(const h2::event &ev);
-	size_t write(uv_stream_t *handle, const uint8_t *data, size_t size);
-
-	void send(std::shared_ptr<h2::stream> stream, const status &s, const data_t &msg = {}) const;
+	detail::task conn(uv_stream_t *stream);
 
 	uv_tcp_t  _handle;
 	uv_loop_t _loop;

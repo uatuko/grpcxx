@@ -1,7 +1,10 @@
 add_library(grpcxx)
 target_sources(grpcxx
 	PRIVATE
+		conn.cpp
+		reader.cpp
 		server.cpp
+		writer.cpp
 	PUBLIC
 		FILE_SET headers TYPE HEADERS
 		FILES
@@ -20,6 +23,10 @@ target_sources(grpcxx
 	PRIVATE
 		FILE_SET private_headers TYPE HEADERS
 		FILES
+			conn.h
+			reader.h
+			task.h
+			writer.h
 			h2/conn.h
 			h2/event.h
 			h2/stream.h
