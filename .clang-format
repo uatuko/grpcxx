@@ -1,7 +1,17 @@
 ---
 BasedOnStyle:  LLVM
-AlignConsecutiveDeclarations: true
-AlignConsecutiveAssignments: true
+AlignConsecutiveAssignments:
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: false
+  AlignCompound: true
+  PadOperators: true
+AlignConsecutiveDeclarations:
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: false
+  AlignCompound: true
+  PadOperators: true
 ColumnLimit: 0
 IndentWidth: 4
 TabWidth: 4
@@ -29,4 +39,7 @@ IncludeCategories:
 - Regex: .*
   Priority: 5
   SortPriority: 0
+InsertNewlineAtEOF: true
 PenaltyReturnTypeOnItsOwnLine: 200
+RemoveSemicolon: true
+Standard: c++20

@@ -27,7 +27,7 @@ public:
 
 	status(code_t code = code_t::ok) : _code(code) {}
 
-	operator std::string() const { return std::to_string(static_cast<int8_t>(_code)); };
+	operator std::string() const { return std::to_string(static_cast<int8_t>(_code)); }
 
 	code_t code() const noexcept { return _code; }
 

@@ -25,7 +25,7 @@ concept rpc_type = requires(T t) {
 	typename T::optional_response_type;
 	{
 		t.map(std::declval<const typename T::optional_response_type &>())
-		} -> std::same_as<std::string>;
+	} -> std::same_as<std::string>;
 
 	// Result
 	typename T::result_type;
@@ -73,7 +73,7 @@ public:
 		return it->second(data);
 	}
 
-	constexpr std::string_view name() const noexcept { return {N}; };
+	constexpr std::string_view name() const noexcept { return {N}; }
 
 private:
 	handlers_t _handlers;
