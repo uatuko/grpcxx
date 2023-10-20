@@ -28,6 +28,13 @@ detail::task server::conn(uv_stream_t *stream) {
 	while (c) {
 		auto ev = co_await c.session();
 
+		if (ev.stream_id.value_or(0) != 0 && !requests.contains(ev.stream_id.value())) {
+			requests.insert({
+				ev.stream_id.value(),
+				{ev.stream_id.value()},
+			});
+		}
+
 		switch (ev.type) {
 		case h2::event::type_t::session_write:
 			co_await c.write(ev.data);
@@ -35,16 +42,13 @@ detail::task server::conn(uv_stream_t *stream) {
 
 		case h2::event::type_t::stream_header: {
 			auto &req = requests[ev.stream_id.value()];
-			if (!req) {
-				req = std::make_optional<detail::request>(ev.stream_id.value());
-			}
-
 			req->header(ev.header->name, ev.header->value);
 			break;
 		}
 
 		default:
-			std::printf("event: %hhu\n", ev.type);
+			std::printf(
+				"  [event] stream_id: %d, type: %hhu\n", ev.stream_id.value_or(-1), ev.type);
 			break;
 		}
 	}
