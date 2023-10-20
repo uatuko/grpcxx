@@ -1,7 +1,6 @@
 #pragma once
 
 #include <coroutine>
-#include <memory>
 #include <queue>
 
 #include <nghttp2/nghttp2.h>
