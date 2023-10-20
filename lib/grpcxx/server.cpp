@@ -1,11 +1,16 @@
 #include "server.h"
 
 #include <future>
+#include <optional>
+#include <unordered_map>
 
 #include "conn.h"
+#include "request.h"
 #include "task.h"
 
 namespace grpcxx {
+using requests_t = std::unordered_map<int32_t, std::optional<detail::request>>;
+
 server::server() {
 	// TODO: error handling
 	uv_loop_init(&_loop);
@@ -18,6 +23,7 @@ detail::task server::conn(uv_stream_t *stream) {
 	std::printf("[info] connection - start\n");
 
 	detail::conn c(stream);
+	requests_t   requests;
 
 	while (c) {
 		auto ev = co_await c.session();
@@ -27,13 +33,15 @@ detail::task server::conn(uv_stream_t *stream) {
 			co_await c.write(ev.data);
 			break;
 
-		case h2::event::type_t::stream_header:
-			std::printf(
-				"  [header](%d) %s : %s\n",
-				ev.stream_id.value(),
-				ev.header->name.c_str(),
-				ev.header->value.c_str());
+		case h2::event::type_t::stream_header: {
+			auto &req = requests[ev.stream_id.value()];
+			if (!req) {
+				req = std::make_optional<detail::request>(ev.stream_id.value());
+			}
+
+			req->header(ev.header->name, ev.header->value);
 			break;
+		}
 
 		default:
 			std::printf("event: %hhu\n", ev.type);
