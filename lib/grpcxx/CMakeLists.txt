@@ -12,6 +12,12 @@ target_sources(grpcxx
 			server.h
 			service.h
 			status.h
+	PRIVATE
+		FILE_SET private_headers TYPE HEADERS
+		FILES
+			conn.h
+			task.h
+			writer.h
 )
 
 # h2 sources
@@ -21,9 +27,6 @@ target_sources(grpcxx
 	PRIVATE
 		FILE_SET private_headers TYPE HEADERS
 		FILES
-			conn.h
-			task.h
-			writer.h
 			h2/event.h
 			h2/session.h
 )
