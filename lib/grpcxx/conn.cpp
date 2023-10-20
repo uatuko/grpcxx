@@ -20,17 +20,16 @@ conn::conn(uv_stream_t *stream) : _handle(new uv_tcp_t{}, deleter{}) {
 
 void conn::alloc_cb(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf) {
 	auto *c = static_cast<conn *>(handle->data);
-	c->_reader.alloc(buf);
+	*buf    = uv_buf_init(c->_buf.data(), c->_buf.capacity());
 }
 
 void conn::read_cb(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf) {
 	auto *c = static_cast<conn *>(stream->data);
-	if (nread < 0) {
-		c->_reader.close();
+	if (nread <= 0) {
 		return;
 	}
 
-	c->_reader.size(nread);
+	c->_session.recv(reinterpret_cast<const uint8_t *>(buf->base), nread);
 }
 } // namespace detail
 } // namespace grpcxx

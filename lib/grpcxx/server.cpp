@@ -20,14 +20,24 @@ detail::task server::conn(uv_stream_t *stream) {
 	detail::conn c(stream);
 
 	while (c) {
-		auto data = co_await c.read();
-		std::printf("[debug] incoming data, size: %zu bytes\n", data.size());
+		auto ev = co_await c.session();
 
-		if (data.size() > 0) {
-			auto out =
-				std::async([&data]() -> std::string { return "reply: " + std::string(data); });
+		switch (ev.type) {
+		case h2::event::type_t::session_write:
+			co_await c.write(ev.data);
+			break;
 
-			co_await c.write(out.get());
+		case h2::event::type_t::stream_header:
+			std::printf(
+				"  [header](%d) %s : %s\n",
+				ev.stream_id.value(),
+				ev.header->name.c_str(),
+				ev.header->value.c_str());
+			break;
+
+		default:
+			std::printf("event: %hhu\n", ev.type);
+			break;
 		}
 	}
 
