@@ -69,7 +69,14 @@ void session::emit(event &&ev) noexcept {
 }
 
 int session::frame_recv_cb(nghttp2_session *session, const nghttp2_frame *frame, void *vsess) {
-	std::printf("session::frame_recv_cb()\n");
+	auto *sess = static_cast<class session *>(vsess);
+	if (0 != (frame->hd.flags & NGHTTP2_FLAG_END_STREAM)) {
+		sess->emit({
+			.stream_id = {frame->hd.stream_id},
+			.type      = event::type_t::stream_end,
+		});
+	}
+
 	return 0;
 }
 
