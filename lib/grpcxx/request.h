@@ -2,6 +2,8 @@
 
 #include <string>
 
+#include "message.h"
+
 namespace grpcxx {
 namespace detail {
 class request {
@@ -14,6 +16,8 @@ public:
 	void header(const std::string &name, const std::string &value) noexcept;
 
 	bool invalid() const noexcept;
+
+	void recv(const std::string_view data) noexcept;
 
 private:
 	enum struct flags_t : uint8_t {
@@ -28,8 +32,11 @@ private:
 		return ((_flags & static_cast<uint8_t>(f)) == static_cast<uint8_t>(f));
 	}
 
-	uint8_t     _flags = 0x00;
-	int32_t     _id;
+	uint8_t _flags = 0x00;
+	int32_t _id;
+
+	message _msg;
+
 	std::string _method;
 	std::string _service;
 };

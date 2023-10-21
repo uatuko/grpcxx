@@ -2,6 +2,7 @@ add_library(grpcxx)
 target_sources(grpcxx
 	PRIVATE
 		conn.cpp
+		message.cpp
 		request.cpp
 		server.cpp
 		writer.cpp
@@ -18,6 +19,7 @@ target_sources(grpcxx
 		FILES
 			conn.h
 			request.h
+			message.h
 			task.h
 			writer.h
 )

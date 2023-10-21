@@ -58,5 +58,17 @@ void request::header(const std::string &name, const std::string &value) noexcept
 bool request::invalid() const noexcept {
 	return flag(flags_t::invalid);
 }
+
+void request::recv(const std::string_view data) noexcept {
+	if (invalid()) {
+		return;
+	}
+
+	try {
+		_msg.bytes(data);
+	} catch (...) {
+		flag(flags_t::invalid);
+	}
+}
 } // namespace detail
 } // namespace grpcxx

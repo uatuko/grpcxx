@@ -59,7 +59,13 @@ void session::await_suspend(std::coroutine_handle<> h) noexcept {
 int session::data_recv_cb(
 	nghttp2_session *session, uint8_t flags, int32_t stream_id, const uint8_t *data, size_t len,
 	void *vsess) {
-	std::printf("session::data_recv_cb()\n");
+	auto *sess = static_cast<class session *>(vsess);
+	sess->emit({
+		.data      = {reinterpret_cast<const char *>(data), len},
+		.stream_id = stream_id,
+		.type      = event::type_t::stream_data,
+	});
+
 	return 0;
 }
 

@@ -40,6 +40,12 @@ detail::task server::conn(uv_stream_t *stream) {
 			co_await c.write(ev.data);
 			break;
 
+		case h2::event::type_t::stream_data: {
+			auto &req = requests[ev.stream_id.value()];
+			req->recv(ev.data);
+			break;
+		}
+
 		case h2::event::type_t::stream_header: {
 			auto &req = requests[ev.stream_id.value()];
 			req->header(ev.header->name, ev.header->value);
