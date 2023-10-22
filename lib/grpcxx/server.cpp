@@ -49,7 +49,7 @@ detail::task server::conn(uv_stream_t *stream) {
 
 		case h2::event::type_t::stream_data: {
 			auto &req = requests[ev.stream_id.value()];
-			req->recv(ev.data);
+			req->read(ev.data);
 			break;
 		}
 

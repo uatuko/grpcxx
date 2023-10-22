@@ -59,7 +59,7 @@ bool request::invalid() const noexcept {
 	return flag(flags_t::invalid);
 }
 
-void request::recv(const std::string_view data) noexcept {
+void request::read(const std::string_view data) noexcept {
 	if (invalid()) {
 		return;
 	}

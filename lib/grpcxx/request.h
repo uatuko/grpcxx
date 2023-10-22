@@ -17,7 +17,7 @@ public:
 
 	bool invalid() const noexcept;
 
-	void recv(const std::string_view data) noexcept;
+	void read(const std::string_view data) noexcept;
 
 private:
 	enum struct flags_t : uint8_t {
