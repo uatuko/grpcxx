@@ -74,6 +74,21 @@ void session::emit(event &&ev) noexcept {
 	resume();
 }
 
+void session::end() noexcept {
+	_eos = true;
+	emit({
+		.type = event::type_t::session_end,
+	});
+}
+
+void session::error(int code) noexcept {
+	_error = true;
+	emit({
+		.error = nghttp2_strerror(code),
+		.type  = event::type_t::session_error,
+	});
+}
+
 int session::frame_recv_cb(nghttp2_session *session, const nghttp2_frame *frame, void *vsess) {
 	auto *sess = static_cast<class session *>(vsess);
 	if (0 != (frame->hd.flags & NGHTTP2_FLAG_END_STREAM)) {
@@ -103,13 +118,13 @@ int session::header_cb(
 	return 0;
 }
 
-void session::recv(const uint8_t *in, size_t size) {
+void session::recv(const uint8_t *in, size_t size) noexcept {
 	if (auto n = nghttp2_session_mem_recv(_session, in, size); n < 0) {
-		throw std::runtime_error(nghttp2_strerror(static_cast<int>(n)));
+		return error(n);
 	}
 
 	if (auto r = nghttp2_session_send(_session); r != 0) {
-		throw std::runtime_error(nghttp2_strerror(r));
+		return error(r);
 	}
 }
 

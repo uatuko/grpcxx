@@ -25,8 +25,10 @@ detail::task server::conn(uv_stream_t *stream) {
 	detail::conn c(stream);
 	requests_t   requests;
 
-	while (c) {
-		auto ev = co_await c.session();
+	auto &session = c.session();
+
+	while (session) {
+		auto ev = co_await session;
 
 		if (ev.stream_id.value_or(0) != 0 && !requests.contains(ev.stream_id.value())) {
 			requests.insert({
@@ -36,6 +38,11 @@ detail::task server::conn(uv_stream_t *stream) {
 		}
 
 		switch (ev.type) {
+		case h2::event::type_t::session_error: {
+			std::printf("  [error] %s\n", ev.error.value().c_str());
+			break;
+		}
+
 		case h2::event::type_t::session_write:
 			co_await c.write(ev.data);
 			break;

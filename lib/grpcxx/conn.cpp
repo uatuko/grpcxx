@@ -26,6 +26,7 @@ void conn::alloc_cb(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf) {
 void conn::read_cb(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf) {
 	auto *c = static_cast<conn *>(stream->data);
 	if (nread <= 0) {
+		c->_session.end();
 		return;
 	}
 

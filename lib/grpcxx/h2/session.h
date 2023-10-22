@@ -18,11 +18,14 @@ public:
 
 	~session();
 
+	operator bool() const noexcept { return !(_eos || _error); }
+
 	bool  await_ready() const noexcept;
 	void  await_suspend(std::coroutine_handle<> h) noexcept;
 	event await_resume() noexcept;
 
-	void recv(const uint8_t *in, size_t size);
+	void end() noexcept;
+	void recv(const uint8_t *in, size_t size) noexcept;
 
 private:
 	static int data_recv_cb(
@@ -41,8 +44,13 @@ private:
 	static int stream_close_cb(
 		nghttp2_session *session, int32_t stream_id, uint32_t error_code, void *vsess);
 
+	void error(int code) noexcept;
+
 	void emit(event &&ev) noexcept;
 	void resume() const noexcept;
+
+	bool _eos   = false;
+	bool _error = false;
 
 	events_t                _events;
 	std::coroutine_handle<> _h;

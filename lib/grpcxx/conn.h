@@ -15,8 +15,6 @@ public:
 	conn(uv_stream_t *stream);
 	conn(const conn &) = delete;
 
-	operator bool() const noexcept { return true; }
-
 	h2::session &session() noexcept { return _session; }
 
 	writer write(std::string_view data) {
