@@ -32,6 +32,7 @@ target_sources(grpcxx
 		FILE_SET private_headers TYPE HEADERS
 		FILES
 			h2/event.h
+			h2/headers.h
 			h2/session.h
 )
 

@@ -107,7 +107,7 @@ int session::header_cb(
 	auto *sess = static_cast<class session *>(vsess);
 	sess->emit({
 		.header =
-			event::header_t{
+			header{
 				.name  = {reinterpret_cast<const char *>(name), namelen},
 				.value = {reinterpret_cast<const char *>(value), valuelen},
 			},
