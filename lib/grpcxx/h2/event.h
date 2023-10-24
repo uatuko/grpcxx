@@ -12,8 +12,7 @@ namespace h2 {
 struct event {
 	enum struct type_t : uint8_t {
 		noop = 0,
-		session_end,
-		session_error,
+		stream_close,
 		stream_data,
 		stream_end,
 		stream_header,

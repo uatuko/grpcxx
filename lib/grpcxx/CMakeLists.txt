@@ -3,6 +3,7 @@ target_sources(grpcxx
 	PRIVATE
 		conn.cpp
 		message.cpp
+		reader.cpp
 		request.cpp
 		server.cpp
 		writer.cpp
@@ -18,7 +19,9 @@ target_sources(grpcxx
 		FILE_SET private_headers TYPE HEADERS
 		FILES
 			conn.h
+			reader.h
 			request.h
+			response.h
 			message.h
 			task.h
 			writer.h
@@ -27,10 +30,12 @@ target_sources(grpcxx
 # h2 sources
 target_sources(grpcxx
 	PRIVATE
+		h2/buffer.cpp
 		h2/session.cpp
 	PRIVATE
 		FILE_SET private_headers TYPE HEADERS
 		FILES
+			h2/buffer.h
 			h2/event.h
 			h2/headers.h
 			h2/session.h

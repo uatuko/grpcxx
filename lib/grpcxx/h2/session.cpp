@@ -34,25 +34,18 @@ session::~session() {
 	nghttp2_session_del(_session);
 }
 
-bool session::await_ready() const noexcept {
-	return !_events.empty();
-}
+void session::data(int32_t stream_id, buffer &buf) const {
+	nghttp2_data_provider provider{
+		.read_callback = buffer::read_cb,
+		.source =
+			{
+				.ptr = &buf,
+			},
+	};
 
-event session::await_resume() noexcept {
-	_h = nullptr;
-
-	if (_events.empty()) {
-		return {};
+	if (auto r = nghttp2_submit_data(_session, NGHTTP2_FLAG_NONE, stream_id, &provider); r != 0) {
+		throw std::runtime_error(std::string("Failed to submit data: ") + nghttp2_strerror(r));
 	}
-
-	auto ev = _events.front();
-	_events.pop();
-
-	return ev;
-}
-
-void session::await_suspend(std::coroutine_handle<> h) noexcept {
-	_h = h;
 }
 
 int session::data_recv_cb(
@@ -69,23 +62,7 @@ int session::data_recv_cb(
 }
 
 void session::emit(event &&ev) noexcept {
-	_events.push(ev);
-	resume();
-}
-
-void session::end() noexcept {
-	_eos = true;
-	emit({
-		.type = event::type_t::session_end,
-	});
-}
-
-void session::error(int code) noexcept {
-	_error = true;
-	emit({
-		.error = nghttp2_strerror(code),
-		.type  = event::type_t::session_error,
-	});
+	_events.push_back(ev);
 }
 
 int session::frame_recv_cb(nghttp2_session *session, const nghttp2_frame *frame, void *vsess) {
@@ -117,36 +94,7 @@ int session::header_cb(
 	return 0;
 }
 
-std::string_view session::pending() noexcept {
-	const uint8_t *bytes;
-	auto           n = nghttp2_session_mem_send(_session, &bytes);
-	if (n < 0) {
-		error(n);
-		return {};
-	}
-
-	return {reinterpret_cast<const char *>(bytes), static_cast<size_t>(n)};
-}
-
-void session::recv(const uint8_t *in, size_t size) noexcept {
-	if (auto n = nghttp2_session_mem_recv(_session, in, size); n < 0) {
-		return error(n);
-	}
-}
-
-void session::resume() const noexcept {
-	if (_h) {
-		_h();
-	}
-}
-
-int session::stream_close_cb(
-	nghttp2_session *session, int32_t stream_id, uint32_t error_code, void *vsess) {
-	std::printf("session::stream_close_db()\n");
-	return 0;
-}
-
-void session::submit(int32_t stream_id, headers &&hdrs) noexcept {
+void session::headers(int32_t stream_id, h2::headers hdrs) const {
 	std::vector<nghttp2_nv> nv;
 	nv.reserve(hdrs.size());
 
@@ -156,14 +104,69 @@ void session::submit(int32_t stream_id, headers &&hdrs) noexcept {
 			const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(h.value.data())),
 			h.name.size(),
 			h.value.size(),
-			NGHTTP2_NV_FLAG_NONE,
+			NGHTTP2_NV_FLAG_NO_COPY_NAME | NGHTTP2_NV_FLAG_NO_COPY_VALUE,
 		});
 	}
 
 	if (auto r = nghttp2_submit_headers(
 			_session, NGHTTP2_FLAG_NONE, stream_id, nullptr, nv.data(), nv.size(), nullptr);
 		r != 0) {
-		return error(r);
+		throw std::runtime_error(std::string("Failed to submit headers: ") + nghttp2_strerror(r));
+	}
+}
+
+std::string_view session::pending() {
+	const uint8_t *bytes;
+	auto           n = nghttp2_session_mem_send(_session, &bytes);
+	if (n < 0) {
+		throw std::runtime_error(
+			std::string("Failed to retrieve pending session data: ") + nghttp2_strerror(n));
+	}
+
+	return {reinterpret_cast<const char *>(bytes), static_cast<size_t>(n)};
+}
+
+session::events_t session::read(std::string_view bytes) {
+	if (auto n = nghttp2_session_mem_recv(
+			_session, reinterpret_cast<const uint8_t *>(bytes.data()), bytes.size());
+		n < 0) {
+		throw std::runtime_error(
+			std::string("Failed to read session data: ") + nghttp2_strerror(n));
+	}
+
+	auto events = _events;
+	_events.clear();
+
+	return events;
+}
+
+int session::stream_close_cb(
+	nghttp2_session *session, int32_t stream_id, uint32_t error_code, void *vsess) {
+	auto *sess = static_cast<class session *>(vsess);
+	sess->emit({
+		.stream_id = stream_id,
+		.type      = event::type_t::stream_close,
+	});
+
+	return 0;
+}
+
+void session::trailers(int32_t stream_id, h2::headers hdrs) const {
+	std::vector<nghttp2_nv> nv;
+	nv.reserve(hdrs.size());
+
+	for (const auto &h : hdrs) {
+		nv.push_back({
+			const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(h.name.data())),
+			const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(h.value.data())),
+			h.name.size(),
+			h.value.size(),
+			NGHTTP2_NV_FLAG_NO_COPY_NAME | NGHTTP2_NV_FLAG_NO_COPY_VALUE,
+		});
+	}
+
+	if (auto r = nghttp2_submit_trailer(_session, stream_id, nv.data(), nv.size()); r != 0) {
+		throw std::runtime_error(std::string("Failed to submit trailers: ") + nghttp2_strerror(r));
 	}
 }
 } // namespace h2

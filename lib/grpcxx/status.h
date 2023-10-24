@@ -25,13 +25,20 @@ public:
 		unauthenticated     = 16,
 	};
 
-	status(code_t code = code_t::ok) : _code(code) {}
+	status(code_t code = code_t::ok) : _code(code), _str() {}
 
-	operator std::string() const { return std::to_string(static_cast<int8_t>(_code)); }
+	operator std::string_view() {
+		if (_str.empty()) {
+			_str = std::to_string(static_cast<int8_t>(_code));
+		}
+
+		return _str;
+	}
 
 	code_t code() const noexcept { return _code; }
 
 private:
-	code_t _code;
+	code_t      _code;
+	std::string _str;
 };
 } // namespace grpcxx

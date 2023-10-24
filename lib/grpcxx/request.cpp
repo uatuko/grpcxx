@@ -4,7 +4,11 @@ namespace grpcxx {
 namespace detail {
 request::request(int32_t id) : _id(id) {}
 
-void request::header(const std::string &name, const std::string &value) noexcept {
+request::operator bool() const noexcept {
+	return (!invalid() && !_service.empty() && !_method.empty());
+}
+
+void request::header(std::string_view name, std::string_view value) noexcept {
 	// Avoid processing further if the request is already invalid
 	if (invalid()) {
 		return;

@@ -10,16 +10,21 @@ class request {
 public:
 	request(int32_t id);
 
+	operator bool() const noexcept;
+
+	std::string_view data() const noexcept { return _msg.data(); }
+
 	const std::string &method() const noexcept { return _method; }
 	const std::string &service() const noexcept { return _service; }
 
-	void header(const std::string &name, const std::string &value) noexcept;
+	void header(std::string_view name, std::string_view value) noexcept;
 
 	bool invalid() const noexcept;
 
 	void read(const std::string_view data) noexcept;
 
 private:
+	// FIXME: would it be better to use std::byte instead?
 	enum struct flags_t : uint8_t {
 		invalid             = 0x01,
 		header_method       = 0x01 << 1, // :method

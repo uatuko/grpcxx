@@ -12,6 +12,8 @@ namespace grpcxx {
 // Forward declarations
 namespace detail {
 struct task;
+class request;
+class response;
 } // namespace detail
 
 namespace h2 {
@@ -21,8 +23,7 @@ class stream;
 
 class server {
 public:
-	using data_t     = std::string;
-	using fn_t       = std::function<std::pair<status, data_t>(std::string_view, const data_t &)>;
+	using fn_t = std::function<std::pair<status, std::string>(std::string_view, std::string_view)>;
 	using services_t = std::unordered_map<std::string_view, fn_t>;
 
 	server();
@@ -39,7 +40,8 @@ public:
 private:
 	static void conn_cb(uv_stream_t *stream, int status);
 
-	detail::task conn(uv_stream_t *stream);
+	detail::task     conn(uv_stream_t *stream);
+	detail::response process(const detail::request &req) noexcept;
 
 	uv_tcp_t  _handle;
 	uv_loop_t _loop;
