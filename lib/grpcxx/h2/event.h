@@ -14,7 +14,6 @@ struct event {
 		noop = 0,
 		session_end,
 		session_error,
-		session_write,
 		stream_data,
 		stream_end,
 		stream_header,

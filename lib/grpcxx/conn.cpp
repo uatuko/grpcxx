@@ -4,7 +4,7 @@
 
 namespace grpcxx {
 namespace detail {
-conn::conn(uv_stream_t *stream) : _handle(new uv_tcp_t{}, deleter{}) {
+conn::conn(uv_stream_t *stream) : _handle(new uv_tcp_t{}, deleter{}), _session(new h2::session{}) {
 	uv_tcp_init(stream->loop, _handle.get());
 	_handle->data = this;
 
@@ -23,14 +23,18 @@ void conn::alloc_cb(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf) {
 	*buf    = uv_buf_init(c->_buf.data(), c->_buf.capacity());
 }
 
+writer conn::flush() const noexcept {
+	return {std::reinterpret_pointer_cast<uv_stream_t>(_handle), _session};
+}
+
 void conn::read_cb(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf) {
 	auto *c = static_cast<conn *>(stream->data);
 	if (nread <= 0) {
-		c->_session.end();
+		c->_session->end();
 		return;
 	}
 
-	c->_session.recv(reinterpret_cast<const uint8_t *>(buf->base), nread);
+	c->_session->recv(reinterpret_cast<const uint8_t *>(buf->base), nread);
 }
 } // namespace detail
 } // namespace grpcxx

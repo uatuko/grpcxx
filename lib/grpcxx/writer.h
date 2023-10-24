@@ -2,16 +2,20 @@
 
 #include <coroutine>
 #include <memory>
-#include <string_view>
 
 #include <uv.h>
+
+#include "h2/session.h"
 
 namespace grpcxx {
 namespace detail {
 class writer {
 public:
+	using session_t = std::shared_ptr<h2::session>;
+	using stream_t  = std::shared_ptr<uv_stream_t>;
+
 	writer(const writer &) = delete;
-	writer(std::shared_ptr<uv_stream_t> handle, std::string_view data);
+	writer(stream_t handle, session_t session);
 
 	bool await_ready() const noexcept;
 	void await_suspend(std::coroutine_handle<> h) noexcept;
@@ -20,12 +24,14 @@ public:
 private:
 	static void write_cb(uv_write_t *req, int status);
 
-	void resume() const noexcept;
+	void resume() noexcept;
 
 	bool                    _done;
 	std::exception_ptr      _e;
 	std::coroutine_handle<> _h;
+	stream_t                _handle;
 	uv_write_t              _req;
+	session_t               _session;
 };
 } // namespace detail
 } // namespace grpcxx

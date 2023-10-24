@@ -2,6 +2,7 @@
 
 #include <coroutine>
 #include <queue>
+#include <string_view>
 
 #include <nghttp2/nghttp2.h>
 
@@ -27,6 +28,10 @@ public:
 	void end() noexcept;
 	void recv(const uint8_t *in, size_t size) noexcept;
 
+	void submit(int32_t stream_id, headers &&hdrs) noexcept;
+
+	std::string_view pending() noexcept;
+
 private:
 	static int data_recv_cb(
 		nghttp2_session *session, uint8_t flags, int32_t stream_id, const uint8_t *data, size_t len,
@@ -37,9 +42,6 @@ private:
 	static int header_cb(
 		nghttp2_session *session, const nghttp2_frame *frame, const uint8_t *name, size_t namelen,
 		const uint8_t *value, size_t valuelen, uint8_t flags, void *vsess);
-
-	static ssize_t send_cb(
-		nghttp2_session *session, const uint8_t *data, size_t length, int flags, void *vsess);
 
 	static int stream_close_cb(
 		nghttp2_session *session, int32_t stream_id, uint32_t error_code, void *vsess);

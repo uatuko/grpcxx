@@ -4,18 +4,24 @@
 
 namespace grpcxx {
 namespace detail {
-writer::writer(std::shared_ptr<uv_stream_t> handle, std::string_view data) :
-	_done(false), _e(nullptr), _h(nullptr), _req() {
+writer::writer(stream_t handle, session_t session) :
+	_done(false), _e(nullptr), _h(nullptr), _handle(handle), _req{}, _session(session) {
 	_req.data = this;
 
+	auto data = _session->pending();
+	if (data.size() == 0) {
+		_done = true;
+		return;
+	}
+
 	auto buf = uv_buf_init(const_cast<char *>(data.data()), data.size());
-	if (auto r = uv_write(&_req, handle.get(), &buf, 1, write_cb); r != 0) {
+	if (auto r = uv_write(&_req, _handle.get(), &buf, 1, write_cb); r != 0) {
 		throw std::runtime_error(std::string("Failed to start writing data: ") + uv_strerror(r));
 	}
 }
 
 bool writer::await_ready() const noexcept {
-	return _done;
+	return (_e || _done);
 }
 
 void writer::await_resume() {
@@ -30,7 +36,26 @@ void writer::await_suspend(std::coroutine_handle<> h) noexcept {
 	_h = h;
 }
 
-void writer::resume() const noexcept {
+void writer::resume() noexcept {
+	if (_session) {
+		if (auto data = _session->pending(); data.size() > 0) {
+			_req = uv_write_t{
+				.data = this,
+			};
+
+			auto buf = uv_buf_init(const_cast<char *>(data.data()), data.size());
+			auto r   = uv_write(&_req, _handle.get(), &buf, 1, write_cb);
+			if (r == 0) {
+				return;
+			}
+
+			auto e = std::make_exception_ptr(
+				std::runtime_error(std::string("Failed to write data: ") + uv_strerror(r)));
+			_e = e;
+		}
+	}
+
+	_done = true;
 	if (_h) {
 		_h();
 	}
@@ -44,7 +69,6 @@ void writer::write_cb(uv_write_t *req, int status) {
 		w->_e = e;
 	}
 
-	w->_done = true;
 	w->resume();
 }
 } // namespace detail

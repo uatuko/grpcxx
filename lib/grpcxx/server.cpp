@@ -25,10 +25,12 @@ detail::task server::conn(uv_stream_t *stream) {
 	detail::conn c(stream);
 	requests_t   requests;
 
-	auto &session = c.session();
+	auto session = c.session();
+	co_await c.flush();
 
-	while (session) {
-		auto ev = co_await session;
+	while (*session) {
+		auto ev = co_await *session;
+		co_await c.flush();
 
 		if (ev.stream_id.value_or(0) != 0 && !requests.contains(ev.stream_id.value())) {
 			requests.insert({
@@ -43,10 +45,6 @@ detail::task server::conn(uv_stream_t *stream) {
 			break;
 		}
 
-		case h2::event::type_t::session_write:
-			co_await c.write(ev.data);
-			break;
-
 		case h2::event::type_t::stream_data: {
 			auto &req = requests[ev.stream_id.value()];
 			req->read(ev.data);
@@ -56,6 +54,22 @@ detail::task server::conn(uv_stream_t *stream) {
 		case h2::event::type_t::stream_header: {
 			auto &req = requests[ev.stream_id.value()];
 			req->header(ev.header->name, ev.header->value);
+			break;
+		}
+
+		case h2::event::type_t::stream_end: {
+			if (ev.stream_id.value() > 0) {
+				// TODO: process request
+				session->submit(
+					ev.stream_id.value(),
+					{
+						{":status", "200"},
+						{"content-type", "application/grpc"},
+					});
+
+				co_await c.flush();
+			}
+
 			break;
 		}
 

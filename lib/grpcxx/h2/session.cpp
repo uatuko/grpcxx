@@ -13,7 +13,6 @@ session::session() {
 	nghttp2_session_callbacks_set_on_data_chunk_recv_callback(callbacks, data_recv_cb);
 	nghttp2_session_callbacks_set_on_frame_recv_callback(callbacks, frame_recv_cb);
 	nghttp2_session_callbacks_set_on_stream_close_callback(callbacks, stream_close_cb);
-	nghttp2_session_callbacks_set_send_callback(callbacks, send_cb);
 
 	nghttp2_session_server_new(&_session, callbacks, this);
 
@@ -118,13 +117,20 @@ int session::header_cb(
 	return 0;
 }
 
+std::string_view session::pending() noexcept {
+	const uint8_t *bytes;
+	auto           n = nghttp2_session_mem_send(_session, &bytes);
+	if (n < 0) {
+		error(n);
+		return {};
+	}
+
+	return {reinterpret_cast<const char *>(bytes), static_cast<size_t>(n)};
+}
+
 void session::recv(const uint8_t *in, size_t size) noexcept {
 	if (auto n = nghttp2_session_mem_recv(_session, in, size); n < 0) {
 		return error(n);
-	}
-
-	if (auto r = nghttp2_session_send(_session); r != 0) {
-		return error(r);
 	}
 }
 
@@ -134,22 +140,31 @@ void session::resume() const noexcept {
 	}
 }
 
-ssize_t session::send_cb(
-	nghttp2_session *session, const uint8_t *data, size_t length, int flags, void *vsess) {
-	std::printf("session::send_cb(), length: %zu\n", length);
-	auto *sess = static_cast<class session *>(vsess);
-	sess->emit({
-		.data = {reinterpret_cast<const char *>(data), length},
-		.type = event::type_t::session_write,
-	});
-
-	return length;
-}
-
 int session::stream_close_cb(
 	nghttp2_session *session, int32_t stream_id, uint32_t error_code, void *vsess) {
 	std::printf("session::stream_close_db()\n");
 	return 0;
+}
+
+void session::submit(int32_t stream_id, headers &&hdrs) noexcept {
+	std::vector<nghttp2_nv> nv;
+	nv.reserve(hdrs.size());
+
+	for (const auto &h : hdrs) {
+		nv.push_back({
+			const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(h.name.data())),
+			const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(h.value.data())),
+			h.name.size(),
+			h.value.size(),
+			NGHTTP2_NV_FLAG_NONE,
+		});
+	}
+
+	if (auto r = nghttp2_submit_headers(
+			_session, NGHTTP2_FLAG_NONE, stream_id, nullptr, nv.data(), nv.size(), nullptr);
+		r != 0) {
+		return error(r);
+	}
 }
 } // namespace h2
 } // namespace grpcxx

@@ -12,14 +12,15 @@ namespace grpcxx {
 namespace detail {
 class conn {
 public:
+	using handle_t  = std::shared_ptr<uv_tcp_t>;
+	using session_t = std::shared_ptr<h2::session>;
+
 	conn(uv_stream_t *stream);
 	conn(const conn &) = delete;
 
-	h2::session &session() noexcept { return _session; }
+	session_t session() noexcept { return _session; }
 
-	writer write(std::string_view data) {
-		return {std::reinterpret_pointer_cast<uv_stream_t>(_handle), data};
-	}
+	writer flush() const noexcept;
 
 private:
 	template <std::size_t N> class buffer_t {
@@ -42,9 +43,9 @@ private:
 	static void alloc_cb(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf);
 	static void read_cb(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf);
 
-	buffer_t<1024>            _buf; // FIXME: make size configurable
-	std::shared_ptr<uv_tcp_t> _handle;
-	h2::session               _session;
+	buffer_t<1024> _buf; // FIXME: make size configurable
+	handle_t       _handle;
+	session_t      _session;
 };
 } // namespace detail
 } // namespace grpcxx
