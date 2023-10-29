@@ -1,7 +1,5 @@
 #include "server.h"
 
-#include <future>
-#include <optional>
 #include <unordered_map>
 
 #include "conn.h"
@@ -10,7 +8,7 @@
 #include "task.h"
 
 namespace grpcxx {
-using requests_t = std::unordered_map<int32_t, std::optional<detail::request>>;
+using requests_t = std::unordered_map<int32_t, detail::request>;
 
 server::server() {
 	// TODO: error handling
@@ -37,53 +35,43 @@ detail::task server::conn(uv_stream_t *stream) {
 		}
 
 		for (const auto &ev : events) {
-			if (ev.stream_id.value_or(0) != 0 && !requests.contains(ev.stream_id.value())) {
-				requests.insert({
-					ev.stream_id.value(),
-					{ev.stream_id.value()},
-				});
+			if (ev.stream_id.value_or(0) <=0 ) {
+				continue;
 			}
+
+			 if (ev.type == h2::event::type_t::stream_close) {
+				requests.erase(ev.stream_id.value());
+				continue;
+			 }
+
+			requests_t::iterator it = requests.emplace(ev.stream_id.value(), ev.stream_id.value()).first;
+			auto &req = it->second;
 
 			switch (ev.type) {
-			case h2::event::type_t::stream_close: {
-				if (ev.stream_id.value() > 0) {
-					requests.erase(ev.stream_id.value());
-				}
-
-				break;
-			}
-
 			case h2::event::type_t::stream_data: {
-				auto &req = requests[ev.stream_id.value()];
-				req->read(ev.data);
+				req.read(ev.data);
 				break;
 			}
 
 			case h2::event::type_t::stream_end: {
-				if (ev.stream_id.value() <= 0) {
-					break;
-				}
-
-				auto &req = requests[ev.stream_id.value()];
-
 				session.headers(
-					ev.stream_id.value(),
+					req.id(),
 					{
 						{":status", "200"},
 						{"content-type", "application/grpc"},
 					});
 
-				auto       resp = process(*req);
+				auto       resp = process(req);
 				auto       data = resp.bytes();
 				h2::buffer buf(data);
-				session.data(ev.stream_id.value(), buf);
+				session.data(req.id(), buf);
 
 				for (auto bytes = session.pending(); bytes.size() > 0; bytes = session.pending()) {
 					co_await c.write(bytes);
 				}
 
 				session.trailers(
-					ev.stream_id.value(),
+					req.id(),
 					{
 						{"grpc-status", resp.status()},
 					});
@@ -96,8 +84,7 @@ detail::task server::conn(uv_stream_t *stream) {
 			}
 
 			case h2::event::type_t::stream_header: {
-				auto &req = requests[ev.stream_id.value()];
-				req->header(ev.header->name, ev.header->value);
+				req.header(ev.header->name, ev.header->value);
 				break;
 			}
 
@@ -122,7 +109,7 @@ void server::conn_cb(uv_stream_t *stream, int status) {
 	s->conn(stream);
 }
 
-detail::response server::process(const detail::request &req) noexcept {
+detail::response server::process(const detail::request &req) const noexcept {
 	if (!req) {
 		return {status::code_t::invalid_argument};
 	}

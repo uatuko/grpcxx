@@ -8,9 +8,13 @@ namespace grpcxx {
 namespace detail {
 class request {
 public:
+	request(request &&)      = default;
+	request(const request &) = delete;
 	request(int32_t id);
 
 	operator bool() const noexcept;
+
+	int32_t id() const noexcept { return _id; }
 
 	std::string_view data() const noexcept { return _msg.data(); }
 

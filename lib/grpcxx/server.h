@@ -41,7 +41,7 @@ private:
 	static void conn_cb(uv_stream_t *stream, int status);
 
 	detail::task     conn(uv_stream_t *stream);
-	detail::response process(const detail::request &req) noexcept;
+	detail::response process(const detail::request &req) const noexcept;
 
 	uv_tcp_t  _handle;
 	uv_loop_t _loop;
