@@ -1,14 +1,18 @@
 #include "server.h"
 
+#include <memory>
 #include <unordered_map>
+#include <vector>
 
 #include "conn.h"
 #include "request.h"
 #include "response.h"
 #include "task.h"
+#include "worker.h"
 
 namespace grpcxx {
 using requests_t = std::unordered_map<int32_t, detail::request>;
+using workers_t  = std::vector<std::unique_ptr<detail::worker>>;
 
 server::server() {
 	// TODO: error handling
@@ -22,7 +26,9 @@ detail::task server::conn(uv_stream_t *stream) {
 	std::printf("[info] connection - start\n");
 
 	detail::conn c(stream);
-	requests_t   requests;
+
+	requests_t requests;
+	workers_t  workers;
 
 	auto &session = c.session();
 	auto  reader  = c.read();
@@ -35,16 +41,17 @@ detail::task server::conn(uv_stream_t *stream) {
 		}
 
 		for (const auto &ev : events) {
-			if (ev.stream_id.value_or(0) <=0 ) {
+			if (ev.stream_id.value_or(0) <= 0) {
 				continue;
 			}
 
-			 if (ev.type == h2::event::type_t::stream_close) {
+			if (ev.type == h2::event::type_t::stream_close) {
 				requests.erase(ev.stream_id.value());
 				continue;
-			 }
+			}
 
-			requests_t::iterator it = requests.emplace(ev.stream_id.value(), ev.stream_id.value()).first;
+			requests_t::iterator it =
+				requests.emplace(ev.stream_id.value(), ev.stream_id.value()).first;
 			auto &req = it->second;
 
 			switch (ev.type) {
@@ -54,31 +61,43 @@ detail::task server::conn(uv_stream_t *stream) {
 			}
 
 			case h2::event::type_t::stream_end: {
-				session.headers(
+				auto task =
+					detail::worker::task_t(std::bind_front(&server::process, this, std::cref(req)));
+
+				// FIXME: set a max worker count (i.e. requests) per connection
+				//        or purge the worker queue periodically to keep memory usage low
+				workers.emplace_back(std::make_unique<detail::worker>(
 					req.id(),
-					{
-						{":status", "200"},
-						{"content-type", "application/grpc"},
-					});
+					&_loop,
+					std::move(task),
+					[&c, &session](detail::response resp) -> detail::task {
+						session.headers(
+							resp.id(),
+							{
+								{":status", "200"},
+								{"content-type", "application/grpc"},
+							});
 
-				auto       resp = process(req);
-				auto       data = resp.bytes();
-				h2::buffer buf(data);
-				session.data(req.id(), buf);
+						auto       data = resp.bytes();
+						h2::buffer buf(data);
+						session.data(resp.id(), buf);
 
-				for (auto bytes = session.pending(); bytes.size() > 0; bytes = session.pending()) {
-					co_await c.write(bytes);
-				}
+						for (auto bytes = session.pending(); bytes.size() > 0;
+							 bytes      = session.pending()) {
+							co_await c.write(bytes);
+						}
 
-				session.trailers(
-					req.id(),
-					{
-						{"grpc-status", resp.status()},
-					});
+						session.trailers(
+							resp.id(),
+							{
+								{"grpc-status", resp.status()},
+							});
 
-				for (auto bytes = session.pending(); bytes.size() > 0; bytes = session.pending()) {
-					co_await c.write(bytes);
-				}
+						for (auto bytes = session.pending(); bytes.size() > 0;
+							 bytes      = session.pending()) {
+							co_await c.write(bytes);
+						}
+					}));
 
 				break;
 			}
@@ -111,21 +130,21 @@ void server::conn_cb(uv_stream_t *stream, int status) {
 
 detail::response server::process(const detail::request &req) const noexcept {
 	if (!req) {
-		return {status::code_t::invalid_argument};
+		return {req.id(), status::code_t::invalid_argument};
 	}
 
 	auto it = _services.find(req.service());
 	if (it == _services.end()) {
-		return {status::code_t::not_found};
+		return {req.id(), status::code_t::not_found};
 	}
 
-	detail::response resp;
+	detail::response resp(req.id());
 	try {
 		auto r = it->second(req.method(), req.data());
 		resp.status(std::move(r.first));
 		resp.data(std::move(r.second));
 	} catch (std::exception &e) {
-		return {status::code_t::internal};
+		return {req.id(), status::code_t::internal};
 	}
 
 	return resp;

@@ -9,7 +9,9 @@ namespace grpcxx {
 namespace detail {
 class response {
 public:
-	response(status::code_t code = status::code_t::ok) : _status(code) {}
+	response(int32_t id, status::code_t code = status::code_t::ok) : _id(id), _status(code) {}
+
+	int32_t id() const noexcept { return _id; }
 
 	std::string      bytes() const noexcept { return _msg.bytes(); }
 	std::string_view status() noexcept { return _status; }
@@ -18,8 +20,9 @@ public:
 	void status(class status &&s) noexcept { _status = std::move(s); }
 
 private:
-	class status _status;
+	int32_t      _id;
 	message      _msg;
+	class status _status;
 };
 } // namespace detail
 } // namespace grpcxx

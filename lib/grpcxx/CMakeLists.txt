@@ -6,6 +6,7 @@ target_sources(grpcxx
 		reader.cpp
 		request.cpp
 		server.cpp
+		worker.cpp
 		writer.cpp
 	PUBLIC
 		FILE_SET headers TYPE HEADERS
@@ -24,6 +25,7 @@ target_sources(grpcxx
 			response.h
 			message.h
 			task.h
+			worker.h
 			writer.h
 )
 
