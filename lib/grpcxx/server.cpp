@@ -5,9 +5,9 @@
 #include <vector>
 
 #include "conn.h"
+#include "coroutine.h"
 #include "request.h"
 #include "response.h"
-#include "task.h"
 #include "worker.h"
 
 namespace grpcxx {
@@ -22,7 +22,7 @@ server::server() {
 	_handle.data = this;
 }
 
-detail::task server::conn(uv_stream_t *stream) {
+detail::coroutine server::conn(uv_stream_t *stream) {
 	std::printf("[info] connection - start\n");
 
 	detail::conn c(stream);
@@ -70,7 +70,7 @@ detail::task server::conn(uv_stream_t *stream) {
 					req.id(),
 					&_loop,
 					std::move(task),
-					[&c, &session](detail::response resp) -> detail::task {
+					[&c, &session](detail::response resp) -> detail::coroutine {
 						session.headers(
 							resp.id(),
 							{

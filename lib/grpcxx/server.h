@@ -11,15 +11,11 @@
 namespace grpcxx {
 // Forward declarations
 namespace detail {
-struct task;
+struct coroutine;
+
 class request;
 class response;
 } // namespace detail
-
-namespace h2 {
-struct event;
-class stream;
-} // namespace h2
 
 class server {
 public:
@@ -40,8 +36,8 @@ public:
 private:
 	static void conn_cb(uv_stream_t *stream, int status);
 
-	detail::task     conn(uv_stream_t *stream);
-	detail::response process(const detail::request &req) const noexcept;
+	detail::coroutine conn(uv_stream_t *stream);
+	detail::response  process(const detail::request &req) const noexcept;
 
 	uv_tcp_t  _handle;
 	uv_loop_t _loop;

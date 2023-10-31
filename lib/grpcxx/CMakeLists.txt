@@ -20,11 +20,11 @@ target_sources(grpcxx
 		FILE_SET private_headers TYPE HEADERS
 		FILES
 			conn.h
+			coroutine.h
 			reader.h
 			request.h
 			response.h
 			message.h
-			task.h
 			worker.h
 			writer.h
 )

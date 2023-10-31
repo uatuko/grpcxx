@@ -6,9 +6,9 @@
 
 namespace grpcxx {
 namespace detail {
-struct task {
+struct coroutine {
 	struct promise_type {
-		constexpr task get_return_object() const noexcept { return {}; }
+		constexpr coroutine get_return_object() const noexcept { return {}; }
 
 		constexpr std::suspend_never initial_suspend() const noexcept { return {}; }
 
