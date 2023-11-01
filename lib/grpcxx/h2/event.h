@@ -21,7 +21,7 @@ struct event {
 	const std::string_view           data;
 	const std::optional<std::string> error;
 	const std::optional<header>      header    = std::nullopt;
-	const std::optional<int32_t>     stream_id = std::nullopt;
+	const int32_t                    stream_id = -1;
 	const type_t                     type      = type_t::noop;
 };
 } // namespace h2

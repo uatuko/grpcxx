@@ -32,12 +32,10 @@ target_sources(grpcxx
 # h2 sources
 target_sources(grpcxx
 	PRIVATE
-		h2/buffer.cpp
 		h2/session.cpp
 	PRIVATE
 		FILE_SET private_headers TYPE HEADERS
 		FILES
-			h2/buffer.h
 			h2/event.h
 			h2/headers.h
 			h2/session.h

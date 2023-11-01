@@ -1,23 +1,104 @@
 #include "conn.h"
 
-#include <string>
-
 namespace grpcxx {
 namespace detail {
-conn::conn(uv_stream_t *stream) : _handle(new uv_tcp_t{}, deleter{}) {
-	uv_tcp_init(stream->loop, _handle.get());
+void conn::alloc(uv_buf_t *buf) noexcept {
+	*buf = uv_buf_init(_buf.data(), _buf.capacity());
+}
 
-	if (auto r = uv_accept(stream, reinterpret_cast<uv_stream_t *>(_handle.get())); r != 0) {
-		throw std::runtime_error(std::string("Failed to accept connection: ") + uv_strerror(r));
+void conn::read(size_t n) noexcept {
+	for (const auto &ev : _session.read({_buf.data(), n})) {
+		if (ev.stream_id <= 0) {
+			continue;
+		}
+
+		if (ev.type == h2::event::type_t::stream_close) {
+			_streams.erase(ev.stream_id);
+			continue;
+		}
+
+		streams_t::iterator it  = _streams.emplace(ev.stream_id, ev.stream_id).first;
+		auto               &req = it->second;
+
+		switch (ev.type) {
+		case h2::event::type_t::stream_data: {
+			req.read(ev.data);
+			break;
+		}
+		case h2::event::type_t::stream_end: {
+			_reqs.push_front(std::move(req));
+			_streams.erase(ev.stream_id);
+			break;
+		}
+
+		case h2::event::type_t::stream_header: {
+			req.header(ev.header->name, ev.header->value);
+			break;
+		}
+
+		default:
+			break;
+		}
 	}
 }
 
-reader conn::read() const noexcept {
-	return {std::reinterpret_pointer_cast<uv_stream_t>(_handle)};
+conn::requests_t conn::reqs() noexcept {
+	auto reqs = std::move(_reqs);
+	_reqs     = requests_t{};
+
+	return reqs;
 }
 
-writer conn::write(std::string_view bytes) const noexcept {
-	return {std::reinterpret_pointer_cast<uv_stream_t>(_handle), bytes};
+void conn::write(uv_stream_t *stream) noexcept {
+	auto *bytes = new std::string();
+	for (auto chunk = _session.pending(); chunk.size() > 0; chunk = _session.pending()) {
+		bytes->append(chunk);
+	}
+
+	if (bytes->empty()) {
+		return;
+	}
+
+	auto  buf = uv_buf_init(const_cast<char *>(bytes->data()), bytes->size());
+	auto *req = new uv_write_t();
+	req->data = bytes;
+
+	if (auto r = uv_write(req, stream, &buf, 1, write_cb); r != 0) {
+		// FIXME: error handling
+		delete bytes;
+		delete req;
+	}
+}
+
+void conn::write(uv_stream_t *stream, response resp) noexcept {
+	_session.headers(
+		resp.id(),
+		{
+			{":status", "200"},
+			{"content-type", "application/grpc"},
+		});
+
+	_session.data(resp.id(), resp.bytes());
+	write(stream);
+
+	_session.trailers(
+		resp.id(),
+		{
+			{"grpc-status", resp.status()},
+		});
+
+	write(stream);
+}
+
+void conn::write_cb(uv_write_t *req, int status) {
+	if (status != 0) {
+		// TODO: error handling
+	}
+
+	auto *str = static_cast<std::string *>(req->data);
+	delete str;
+
+	delete req;
 }
 } // namespace detail
 } // namespace grpcxx

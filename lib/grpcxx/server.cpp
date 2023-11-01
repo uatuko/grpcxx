@@ -1,6 +1,8 @@
 #include "server.h"
 
+#include <list>
 #include <memory>
+#include <queue>
 #include <unordered_map>
 #include <vector>
 
@@ -10,10 +12,82 @@
 #include "response.h"
 #include "worker.h"
 
-namespace grpcxx {
-using requests_t = std::unordered_map<int32_t, detail::request>;
-using workers_t  = std::vector<std::unique_ptr<detail::worker>>;
+class threadpool {
+public:
+	explicit threadpool(const std::size_t threadCount) {
+		for (std::size_t i = 0; i < threadCount; ++i) {
+			std::thread worker_thread([this]() { this->loop(); });
+			_threads.push_back(std::move(worker_thread));
+		}
+	}
 
+	~threadpool() { shutdown(); }
+
+	auto schedule() {
+		struct awaiter {
+			constexpr bool await_ready() const noexcept { return false; }
+			constexpr void await_resume() const noexcept {}
+			void           await_suspend(std::coroutine_handle<> coro) const noexcept {
+                _pool->enqueue_task(coro);
+			}
+
+			threadpool *_pool;
+		};
+
+		return awaiter{this};
+	}
+
+private:
+	void loop() {
+		while (!_stop_thread) {
+			std::unique_lock<std::mutex> lock(_mutex);
+
+			while (!_stop_thread && _coros.size() == 0) {
+				_cond.wait_for(lock, std::chrono::microseconds(100));
+			}
+
+			if (_stop_thread) {
+				break;
+			}
+
+			auto coro = _coros.front();
+			_coros.pop();
+
+			lock.unlock();
+			coro.resume();
+		}
+	}
+
+	void enqueue_task(std::coroutine_handle<> coro) noexcept {
+		std::unique_lock<std::mutex> lock(_mutex);
+		_coros.emplace(coro);
+		_cond.notify_one();
+	}
+
+	void shutdown() {
+		_stop_thread = true;
+		while (_threads.size() > 0) {
+			std::thread &thread = _threads.back();
+			if (thread.joinable()) {
+				thread.join();
+			}
+
+			_threads.pop_back();
+		}
+	}
+
+	std::list<std::thread> _threads;
+
+	std::mutex                          _mutex;
+	std::condition_variable             _cond;
+	std::queue<std::coroutine_handle<>> _coros;
+
+	bool _stop_thread = false;
+};
+
+threadpool pool{std::thread::hardware_concurrency()};
+
+namespace grpcxx {
 server::server() {
 	// TODO: error handling
 	uv_loop_init(&_loop);
@@ -22,101 +96,47 @@ server::server() {
 	_handle.data = this;
 }
 
-detail::coroutine server::conn(uv_stream_t *stream) {
-	std::printf("[info] connection - start\n");
+detail::coroutine server::accept(uv_stream_t *stream) {
+	uv_loop_t loop;
+	uv_tcp_t  handle;
 
-	detail::conn c(stream);
+	uv_loop_init(&loop);
+	loop.data = this;
 
-	requests_t requests;
-	workers_t  workers;
+	uv_tcp_init(&loop, &handle);
 
-	auto &session = c.session();
-	auto  reader  = c.read();
-
-	while (reader) {
-		auto events = session.read(co_await reader);
-
-		for (auto bytes = session.pending(); bytes.size() > 0; bytes = session.pending()) {
-			co_await c.write(bytes);
-		}
-
-		for (const auto &ev : events) {
-			if (ev.stream_id.value_or(0) <= 0) {
-				continue;
-			}
-
-			if (ev.type == h2::event::type_t::stream_close) {
-				requests.erase(ev.stream_id.value());
-				continue;
-			}
-
-			requests_t::iterator it =
-				requests.emplace(ev.stream_id.value(), ev.stream_id.value()).first;
-			auto &req = it->second;
-
-			switch (ev.type) {
-			case h2::event::type_t::stream_data: {
-				req.read(ev.data);
-				break;
-			}
-
-			case h2::event::type_t::stream_end: {
-				auto task =
-					detail::worker::task_t(std::bind_front(&server::process, this, std::cref(req)));
-
-				// FIXME: set a max worker count (i.e. requests) per connection
-				//        or purge the worker queue periodically to keep memory usage low
-				workers.emplace_back(std::make_unique<detail::worker>(
-					req.id(),
-					&_loop,
-					std::move(task),
-					[&c, &session](detail::response resp) -> detail::coroutine {
-						session.headers(
-							resp.id(),
-							{
-								{":status", "200"},
-								{"content-type", "application/grpc"},
-							});
-
-						auto       data = resp.bytes();
-						h2::buffer buf(data);
-						session.data(resp.id(), buf);
-
-						for (auto bytes = session.pending(); bytes.size() > 0;
-							 bytes      = session.pending()) {
-							co_await c.write(bytes);
-						}
-
-						session.trailers(
-							resp.id(),
-							{
-								{"grpc-status", resp.status()},
-							});
-
-						for (auto bytes = session.pending(); bytes.size() > 0;
-							 bytes      = session.pending()) {
-							co_await c.write(bytes);
-						}
-					}));
-
-				break;
-			}
-
-			case h2::event::type_t::stream_header: {
-				req.header(ev.header->name, ev.header->value);
-				break;
-			}
-
-			default: {
-				std::printf(
-					"  [event] stream_id: %d, type: %hhu\n", ev.stream_id.value_or(-1), ev.type);
-				break;
-			}
-			}
-		}
+	if (auto r = uv_accept(stream, reinterpret_cast<uv_stream_t *>(&handle)); r != 0) {
+		throw std::runtime_error(std::string("Failed to accept connection: ") + uv_strerror(r));
 	}
 
-	std::printf("[info] connection - end\n");
+	co_await pool.schedule();
+
+	detail::conn c;
+	handle.data = &c;
+
+	uv_read_start(
+		reinterpret_cast<uv_stream_t *>(&handle),
+		[](uv_handle_t *handle, size_t, uv_buf_t *buf) {
+			auto *c = static_cast<detail::conn *>(handle->data);
+			c->alloc(buf);
+		},
+		[](uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf) {
+			if (nread <= 0) {
+				return;
+			}
+
+			auto *c = static_cast<detail::conn *>(stream->data);
+			c->read(nread);
+			c->write(stream);
+
+			auto *s = static_cast<server *>(stream->loop->data);
+			for (const auto &req : c->reqs()) {
+				auto resp = s->process(req);
+				c->write(stream, resp);
+			}
+		});
+
+	uv_run(&loop, UV_RUN_DEFAULT);
 }
 
 void server::conn_cb(uv_stream_t *stream, int status) {
@@ -125,7 +145,7 @@ void server::conn_cb(uv_stream_t *stream, int status) {
 	}
 
 	auto *s = static_cast<server *>(stream->data);
-	s->conn(stream);
+	s->accept(stream);
 }
 
 detail::response server::process(const detail::request &req) const noexcept {

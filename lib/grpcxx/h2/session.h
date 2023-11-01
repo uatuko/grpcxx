@@ -1,11 +1,10 @@
 #pragma once
 
-#include <string_view>
+#include <string>
 #include <vector>
 
 #include <nghttp2/nghttp2.h>
 
-#include "buffer.h"
 #include "event.h"
 
 namespace grpcxx {
@@ -20,7 +19,7 @@ public:
 	~session();
 
 	void headers(int32_t stream_id, h2::headers hdrs) const;
-	void data(int32_t stream_id, buffer &buf) const;
+	void data(int32_t stream_id, std::string &&data);
 	void trailers(int32_t stream_id, h2::headers hdrs) const;
 
 	events_t         read(std::string_view bytes);
@@ -37,11 +36,16 @@ private:
 		nghttp2_session *session, const nghttp2_frame *frame, const uint8_t *name, size_t namelen,
 		const uint8_t *value, size_t valuelen, uint8_t flags, void *vsess);
 
+	static ssize_t read_cb(
+		nghttp2_session *session, int32_t stream_id, uint8_t *buf, size_t length,
+		uint32_t *data_flags, nghttp2_data_source *source, void *);
+
 	static int stream_close_cb(
 		nghttp2_session *session, int32_t stream_id, uint32_t error_code, void *vsess);
 
 	void emit(event &&ev) noexcept;
 
+	std::string      _data;
 	events_t         _events;
 	nghttp2_session *_session;
 };

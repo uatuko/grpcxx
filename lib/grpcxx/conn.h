@@ -1,39 +1,49 @@
 #pragma once
 
-#include <memory>
+#include <forward_list>
+#include <unordered_map>
 
 #include <uv.h>
 
 #include "h2/session.h"
 
-#include "reader.h"
-#include "writer.h"
+#include "request.h"
+#include "response.h"
 
 namespace grpcxx {
 namespace detail {
 class conn {
 public:
-	using handle_t = std::shared_ptr<uv_tcp_t>;
+	using requests_t = std::forward_list<request>;
+	using streams_t  = std::unordered_map<int32_t, request>;
 
-	conn(uv_stream_t *stream);
+	conn()             = default;
 	conn(const conn &) = delete;
 
-	h2::session &session() noexcept { return _session; }
+	void alloc(uv_buf_t *buf) noexcept;
+	void read(size_t n) noexcept;
+	void write(uv_stream_t *stream) noexcept;
+	void write(uv_stream_t *stream, response resp) noexcept;
 
-	reader read() const noexcept;
-	writer write(std::string_view bytes) const noexcept;
+	requests_t reqs() noexcept;
 
 private:
-	struct deleter {
-		void operator()(void *handle) const noexcept {
-			uv_close(static_cast<uv_handle_t *>(handle), [](uv_handle_t *handle) {
-				delete reinterpret_cast<uv_tcp_t *>(handle);
-			});
-		}
+	template <std::size_t N> class buffer_t {
+	public:
+		constexpr char       *data() noexcept { return &_data[0]; }
+		constexpr std::size_t capacity() const noexcept { return N; }
+
+	private:
+		char _data[N];
 	};
 
-	handle_t    _handle;
-	h2::session _session;
+	static void write_cb(uv_write_t *req, int status);
+
+	requests_t _reqs;
+	streams_t  _streams;
+
+	buffer_t<1024> _buf; // FIXME: make size configurable
+	h2::session    _session;
 };
 } // namespace detail
 } // namespace grpcxx

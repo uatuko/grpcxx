@@ -4,7 +4,7 @@
 
 namespace grpcxx {
 namespace h2 {
-session::session() {
+session::session() : _data(), _events(), _session(nullptr) {
 	// Initialise HTTP/2 session
 	nghttp2_session_callbacks *callbacks;
 	nghttp2_session_callbacks_new(&callbacks);
@@ -34,12 +34,13 @@ session::~session() {
 	nghttp2_session_del(_session);
 }
 
-void session::data(int32_t stream_id, buffer &buf) const {
+void session::data(int32_t stream_id, std::string &&data) {
+	_data = std::move(data);
 	nghttp2_data_provider provider{
-		.read_callback = buffer::read_cb,
+		.read_callback = read_cb,
 		.source =
 			{
-				.ptr = &buf,
+				.ptr = &_data,
 			},
 	};
 
@@ -69,7 +70,7 @@ int session::frame_recv_cb(nghttp2_session *session, const nghttp2_frame *frame,
 	auto *sess = static_cast<class session *>(vsess);
 	if (0 != (frame->hd.flags & NGHTTP2_FLAG_END_STREAM)) {
 		sess->emit({
-			.stream_id = {frame->hd.stream_id},
+			.stream_id = frame->hd.stream_id,
 			.type      = event::type_t::stream_end,
 		});
 	}
@@ -87,7 +88,7 @@ int session::header_cb(
 				.name  = {reinterpret_cast<const char *>(name), namelen},
 				.value = {reinterpret_cast<const char *>(value), valuelen},
 			},
-		.stream_id = {frame->hd.stream_id},
+		.stream_id = frame->hd.stream_id,
 		.type      = event::type_t::stream_header,
 	});
 
@@ -138,6 +139,22 @@ session::events_t session::read(std::string_view bytes) {
 	_events.clear();
 
 	return events;
+}
+
+ssize_t session::read_cb(
+	nghttp2_session *session, int32_t stream_id, uint8_t *buf, size_t length, uint32_t *data_flags,
+	nghttp2_data_source *source, void *) {
+	auto *str = static_cast<std::string *>(source->ptr);
+
+	if (length >= str->size()) {
+		length       = str->size();
+		*data_flags |= NGHTTP2_DATA_FLAG_EOF;
+	}
+
+	std::memcpy(buf, str->data(), length);
+	str->erase(0, length);
+
+	return length;
 }
 
 int session::stream_close_cb(
