@@ -6,6 +6,7 @@
 
 #include <uv.h>
 
+#include "pool.h"
 #include "service.h"
 
 namespace grpcxx {
@@ -42,6 +43,7 @@ private:
 	uv_tcp_t  _handle;
 	uv_loop_t _loop;
 
-	services_t _services;
+	detail::pool _pool;
+	services_t   _services;
 };
 } // namespace grpcxx

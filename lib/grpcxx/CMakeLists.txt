@@ -3,30 +3,28 @@ target_sources(grpcxx
 	PRIVATE
 		conn.cpp
 		message.cpp
-		reader.cpp
+		pool.cpp
 		request.cpp
 		server.cpp
 		worker.cpp
-		writer.cpp
 	PUBLIC
 		FILE_SET headers TYPE HEADERS
 		FILES
 			fixed_string.h
+			pool.h
 			rpc.h
 			server.h
 			service.h
 			status.h
+			worker.h
 	PRIVATE
 		FILE_SET private_headers TYPE HEADERS
 		FILES
 			conn.h
 			coroutine.h
-			reader.h
+			message.h
 			request.h
 			response.h
-			message.h
-			worker.h
-			writer.h
 )
 
 # h2 sources

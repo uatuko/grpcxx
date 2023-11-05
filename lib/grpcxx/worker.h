@@ -1,34 +1,31 @@
 #pragma once
 
-#include <future>
+#include <coroutine>
+#include <queue>
+#include <thread>
 
 #include <uv.h>
-
-#include "response.h"
 
 namespace grpcxx {
 namespace detail {
 class worker {
 public:
-	using fn_t   = std::function<void(response)>;
-	using task_t = std::packaged_task<response()>;
-
+	worker();
 	worker(const worker &) = delete;
-	worker(int32_t id, uv_loop_t *loop, task_t &&task, fn_t &&fn);
+
+	uv_loop_t *loop() noexcept { return &_loop; }
+
+	void enqueue(std::coroutine_handle<> h) noexcept;
+	void run();
 
 private:
-	static void work_cb(uv_work_t *req);
-	static void after_work_cb(uv_work_t *req, int status);
+	using handles_t = std::queue<std::coroutine_handle<>>;
 
-	void run() noexcept;
+	std::condition_variable _cv;
+	handles_t               _handles;
+	std::mutex              _mutex;
 
-	int32_t _id;
-
-	std::exception_ptr _e;
-	fn_t               _fn;
-	task_t             _task;
-
-	uv_work_t *_req;
+	uv_loop_t _loop;
 };
 } // namespace detail
 } // namespace grpcxx

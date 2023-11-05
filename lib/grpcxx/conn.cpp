@@ -2,8 +2,21 @@
 
 namespace grpcxx {
 namespace detail {
-void conn::alloc(uv_buf_t *buf) noexcept {
-	*buf = uv_buf_init(_buf.data(), _buf.capacity());
+void conn::alloc_cb(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf) {
+	auto *c = static_cast<conn *>(handle->data);
+	*buf    = uv_buf_init(c->_buf.data(), c->_buf.capacity());
+}
+
+void conn::close_cb(uv_handle_t *handle) {
+	auto *c = static_cast<conn *>(handle->data);
+	c->end();
+}
+
+void conn::end() noexcept {
+	_end = true;
+	if (_h) {
+		_h.resume();
+	}
 }
 
 void conn::read(size_t n) noexcept {
