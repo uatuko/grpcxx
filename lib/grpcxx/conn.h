@@ -26,7 +26,7 @@ public:
 	void           await_resume() noexcept { _h = nullptr; }
 
 	void end() noexcept;
-	void read(std::size_t n) noexcept;
+	void read(std::size_t n);
 	void write(uv_stream_t *stream) noexcept;
 	void write(uv_stream_t *stream, response resp) noexcept;
 

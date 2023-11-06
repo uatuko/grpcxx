@@ -56,7 +56,13 @@ detail::coroutine server::accept(uv_stream_t *stream) {
 					return;
 				}
 
-				c->read(nread);
+				try {
+					c->read(nread);
+				} catch (...) {
+					uv_close(reinterpret_cast<uv_handle_t *>(stream), detail::conn::close_cb);
+					return;
+				}
+
 				c->write(stream);
 
 				auto *s = static_cast<server *>(stream->loop->data);

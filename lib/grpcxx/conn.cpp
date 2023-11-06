@@ -19,7 +19,7 @@ void conn::end() noexcept {
 	}
 }
 
-void conn::read(std::size_t n) noexcept {
+void conn::read(std::size_t n) {
 	for (const auto &ev : _session.read({_buf.data(), n})) {
 		if (ev.stream_id <= 0) {
 			continue;
@@ -57,7 +57,7 @@ void conn::read(std::size_t n) noexcept {
 
 conn::requests_t conn::reqs() noexcept {
 	auto reqs = std::move(_reqs);
-	_reqs     = requests_t{};
+	_reqs     = requests_t();
 
 	return reqs;
 }
