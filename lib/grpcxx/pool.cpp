@@ -2,13 +2,13 @@
 
 namespace grpcxx {
 namespace detail {
-pool::pool(size_t n) : _idx(0), _threads(), _workers(n) {
+pool::pool(std::size_t n) : _idx(0), _threads(), _workers(n) {
 	if (n == 0) {
 		n        = 1;
 		_workers = workers_t(n);
 	}
 
-	for (size_t i = 0; i < n; i++) {
+	for (std::size_t i = 0; i < n; i++) {
 		_threads.emplace_front(&worker::run, std::ref(_workers[i]));
 	}
 }

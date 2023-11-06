@@ -23,10 +23,11 @@ public:
 	using fn_t = std::function<std::pair<status, std::string>(std::string_view, std::string_view)>;
 	using services_t = std::unordered_map<std::string_view, fn_t>;
 
-	server();
+	server(const server &) = delete;
+	server(std::size_t n = std::thread::hardware_concurrency()) noexcept;
 
 	template <typename S> void add(S &s) {
-		fn_t fn = std::bind(&S::call, &s, std::placeholders::_1, std::placeholders::_2);
+		fn_t fn = std::bind_front(&S::call, &s);
 		_services.insert({s.name(), fn});
 	}
 

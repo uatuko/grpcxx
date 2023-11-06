@@ -24,9 +24,9 @@ void message::bytes(std::string_view bytes) {
 		throw std::length_error("Message larger than what's indicated in the prefix.");
 	}
 
-	size_t head = 0;
+	std::size_t head = 0;
 	if (_prefix.size() < 5) {
-		size_t n = bytes.size() > 5 ? 5 : bytes.size();
+		std::size_t n = bytes.size() > 5 ? 5 : bytes.size();
 		_prefix.append(bytes.data(), n);
 
 		head += n;

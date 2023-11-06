@@ -8,7 +8,7 @@
 #include "response.h"
 
 namespace grpcxx {
-server::server() : _handle(), _loop(), _pool(), _services() {
+server::server(std::size_t n) noexcept : _handle(), _loop(), _pool(n), _services() {
 	uv_loop_init(&_loop);
 	uv_tcp_init(&_loop, &_handle);
 

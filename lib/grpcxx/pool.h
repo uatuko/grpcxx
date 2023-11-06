@@ -31,7 +31,7 @@ public:
 		pool      *_pool;
 	};
 
-	pool(size_t n = std::thread::hardware_concurrency());
+	pool(std::size_t n);
 	pool(const pool &) = delete;
 
 	worker &worker() noexcept;
@@ -42,9 +42,9 @@ private:
 	using threads_t = std::forward_list<std::thread>;
 	using workers_t = std::vector<detail::worker>;
 
-	size_t    _idx;
-	threads_t _threads;
-	workers_t _workers;
+	std::size_t _idx;
+	threads_t   _threads;
+	workers_t   _workers;
 };
 } // namespace detail
 } // namespace grpcxx

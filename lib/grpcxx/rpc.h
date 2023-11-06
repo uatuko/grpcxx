@@ -21,7 +21,7 @@ template <fixed_string M, typename T, typename U> struct rpc {
 	request_type map(std::string_view data) const {
 		constexpr bool can_map = requires(request_type t) {
 			{
-				t.ParseFromArray(std::declval<const char *>(), std::declval<size_t>())
+				t.ParseFromArray(std::declval<const char *>(), std::declval<std::size_t>())
 			} -> std::same_as<bool>;
 		};
 		static_assert(can_map, "No known method to deserialize data");

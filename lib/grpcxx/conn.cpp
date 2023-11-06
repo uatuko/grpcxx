@@ -19,7 +19,7 @@ void conn::end() noexcept {
 	}
 }
 
-void conn::read(size_t n) noexcept {
+void conn::read(std::size_t n) noexcept {
 	for (const auto &ev : _session.read({_buf.data(), n})) {
 		if (ev.stream_id <= 0) {
 			continue;

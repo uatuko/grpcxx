@@ -16,7 +16,7 @@ void worker::run() {
 	while (true) {
 		if (uv_run(&_loop, UV_RUN_ONCE) != 0) {
 			// Give extra cpu time if the loop is "active"
-			for (uint8_t r = _loop.active_handles + 1; r > 0; r--) {
+			for (uint8_t r = _loop.active_handles; r > 0; r--) {
 				if (uv_run(&_loop, UV_RUN_NOWAIT) == 0) {
 					break;
 				}
