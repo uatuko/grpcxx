@@ -33,46 +33,22 @@ detail::coroutine server::accept(uv_stream_t *stream) {
 	uv_close(reinterpret_cast<uv_handle_t *>(&tmp_handle), nullptr);
 
 	auto *loop = co_await _pool.schedule();
-	{
-		loop->data = this;
-
+	{ // Executed in a worker thread
 		uv_tcp_t handle;
 		uv_tcp_init(loop, &handle);
 		uv_tcp_open(&handle, fd);
 
-		detail::conn c;
-		handle.data = &c;
-
-		uv_read_start(
-			reinterpret_cast<uv_stream_t *>(&handle),
-			detail::conn::alloc_cb,
-			[](uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf) {
-				auto *c = static_cast<detail::conn *>(stream->data);
-				if (nread <= 0) {
-					if (nread < 0) {
-						uv_close(reinterpret_cast<uv_handle_t *>(stream), detail::conn::close_cb);
-					}
-
-					return;
+		detail::conn c(&handle);
+		while (c) {
+			for (const auto &req : co_await c) {
+				if (!c) {
+					break;
 				}
 
-				try {
-					c->read(nread);
-				} catch (...) {
-					uv_close(reinterpret_cast<uv_handle_t *>(stream), detail::conn::close_cb);
-					return;
-				}
-
-				c->write(stream);
-
-				auto *s = static_cast<server *>(stream->loop->data);
-				for (const auto &req : c->reqs()) {
-					auto resp = s->process(req);
-					c->write(stream, resp);
-				}
-			});
-
-		co_await c;
+				auto resp = process(req);
+				c.write(resp);
+			}
+		}
 	}
 }
 

@@ -2,21 +2,53 @@
 
 namespace grpcxx {
 namespace detail {
-void conn::alloc_cb(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf) {
-	auto *c = static_cast<conn *>(handle->data);
-	*buf    = uv_buf_init(c->_buf.data(), c->_buf.capacity());
+conn::conn(uv_tcp_t *handle) noexcept :
+	_buf(), _eos(false), _h(nullptr), _handle(handle), _reqs(), _session(), _streams() {
+	_handle->data = this;
+
+	uv_read_start(
+		reinterpret_cast<uv_stream_t *>(_handle),
+		[](uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf) {
+			auto *c = static_cast<conn *>(handle->data);
+			*buf    = uv_buf_init(c->_buf.data(), c->_buf.capacity());
+		},
+		[](uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf) {
+			if (nread <= 0) {
+				if (nread < 0) {
+					uv_close(reinterpret_cast<uv_handle_t *>(stream), detail::conn::close_cb);
+				}
+
+				return;
+			}
+
+			auto *c = static_cast<detail::conn *>(stream->data);
+
+			try {
+				c->read(nread);
+			} catch (...) {
+				uv_close(reinterpret_cast<uv_handle_t *>(stream), detail::conn::close_cb);
+				return;
+			}
+		});
+}
+
+conn::requests_t conn::await_resume() noexcept {
+	_h = nullptr;
+
+	if (_reqs.empty()) {
+		return {};
+	}
+
+	auto reqs = std::move(_reqs);
+	_reqs     = requests_t();
+
+	return reqs;
 }
 
 void conn::close_cb(uv_handle_t *handle) {
 	auto *c = static_cast<conn *>(handle->data);
-	c->end();
-}
-
-void conn::end() noexcept {
-	_end = true;
-	if (_h) {
-		_h.resume();
-	}
+	c->_eos = true;
+	c->resume();
 }
 
 void conn::read(std::size_t n) {
@@ -38,6 +70,7 @@ void conn::read(std::size_t n) {
 			req.read(ev.data);
 			break;
 		}
+
 		case h2::event::type_t::stream_end: {
 			_reqs.push_front(std::move(req));
 			_streams.erase(ev.stream_id);
@@ -53,16 +86,21 @@ void conn::read(std::size_t n) {
 			break;
 		}
 	}
+
+	write();
+
+	if (!_reqs.empty()) {
+		resume();
+	}
 }
 
-conn::requests_t conn::reqs() noexcept {
-	auto reqs = std::move(_reqs);
-	_reqs     = requests_t();
-
-	return reqs;
+void conn::resume() noexcept {
+	if (_h) {
+		_h.resume();
+	}
 }
 
-void conn::write(uv_stream_t *stream) noexcept {
+void conn::write() noexcept {
 	auto *bytes = new std::string();
 	for (auto chunk = _session.pending(); chunk.size() > 0; chunk = _session.pending()) {
 		bytes->append(chunk);
@@ -76,14 +114,15 @@ void conn::write(uv_stream_t *stream) noexcept {
 	auto *req = new uv_write_t();
 	req->data = bytes;
 
-	if (auto r = uv_write(req, stream, &buf, 1, write_cb); r != 0) {
+	if (auto r = uv_write(req, reinterpret_cast<uv_stream_t *>(_handle), &buf, 1, write_cb);
+		r != 0) {
 		// FIXME: error handling
 		delete bytes;
 		delete req;
 	}
 }
 
-void conn::write(uv_stream_t *stream, response resp) noexcept {
+void conn::write(response resp) noexcept {
 	_session.headers(
 		resp.id(),
 		{
@@ -92,7 +131,7 @@ void conn::write(uv_stream_t *stream, response resp) noexcept {
 		});
 
 	_session.data(resp.id(), resp.bytes());
-	write(stream);
+	write();
 
 	_session.trailers(
 		resp.id(),
@@ -100,7 +139,7 @@ void conn::write(uv_stream_t *stream, response resp) noexcept {
 			{"grpc-status", resp.status()},
 		});
 
-	write(stream);
+	write();
 }
 
 void conn::write_cb(uv_write_t *req, int status) {
