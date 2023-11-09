@@ -15,18 +15,18 @@ conn::conn(uv_tcp_t *handle) noexcept :
 		[](uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf) {
 			if (nread <= 0) {
 				if (nread < 0) {
-					uv_close(reinterpret_cast<uv_handle_t *>(stream), detail::conn::close_cb);
+					uv_close(reinterpret_cast<uv_handle_t *>(stream), close_cb);
 				}
 
 				return;
 			}
 
-			auto *c = static_cast<detail::conn *>(stream->data);
+			auto *c = static_cast<conn *>(stream->data);
 
 			try {
 				c->read(nread);
 			} catch (...) {
-				uv_close(reinterpret_cast<uv_handle_t *>(stream), detail::conn::close_cb);
+				uv_close(reinterpret_cast<uv_handle_t *>(stream), close_cb);
 				return;
 			}
 		});
