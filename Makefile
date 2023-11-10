@@ -25,12 +25,12 @@ lint:
 ifeq (, $(shell which clang-format))
 	echo '\033[1;41m WARN \033[0m clang-format not found, not linting files';
 else
-	clang-format -style=file --dry-run $(sources)
+	clang-format --style=file --dry-run $(sources)
 endif
 
 lint\:ci:
-	clang-format -style=file --dry-run -Werror $(sources)
+	clang-format --style=file --dry-run --Werror $(sources)
 
 lint\:fix:
-	clang-format -style=file -i $(sources)
+	clang-format --style=file -i $(sources)
 

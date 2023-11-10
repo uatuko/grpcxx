@@ -1,28 +1,42 @@
 add_library(grpcxx)
 target_sources(grpcxx
 	PRIVATE
+		conn.cpp
+		message.cpp
+		pool.cpp
+		request.cpp
 		server.cpp
+		worker.cpp
 	PUBLIC
 		FILE_SET headers TYPE HEADERS
 		FILES
 			fixed_string.h
+			pool.h
 			rpc.h
 			server.h
 			service.h
 			status.h
+			worker.h
+	PRIVATE
+		FILE_SET private_headers TYPE HEADERS
+		FILES
+			conn.h
+			coroutine.h
+			message.h
+			request.h
+			response.h
 )
 
 # h2 sources
 target_sources(grpcxx
 	PRIVATE
-		h2/conn.cpp
-		h2/stream.cpp
+		h2/session.cpp
 	PRIVATE
 		FILE_SET private_headers TYPE HEADERS
 		FILES
-			h2/conn.h
 			h2/event.h
-			h2/stream.h
+			h2/headers.h
+			h2/session.h
 )
 
 target_link_libraries(grpcxx

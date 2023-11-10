@@ -1,19 +1,27 @@
 #pragma once
 
-#include "stream.h"
+#include <map>
+#include <optional>
+#include <string>
+#include <string_view>
+
+#include "headers.h"
 
 namespace grpcxx {
 namespace h2 {
 struct event {
 	enum struct type_t : uint8_t {
-		reserved = 0,
+		noop = 0,
+		stream_close,
 		stream_data,
 		stream_end,
-		stream_headers,
+		stream_header,
 	};
 
-	std::shared_ptr<stream> stream;
-	const type_t            type;
+	const std::string_view      data;
+	const std::optional<header> header    = std::nullopt;
+	const int32_t               stream_id = -1;
+	const type_t                type      = type_t::noop;
 };
 } // namespace h2
 } // namespace grpcxx

@@ -18,14 +18,17 @@ template <fixed_string M, typename T, typename U> struct rpc {
 	using optional_response_type = std::optional<response_type>;
 	using result_type            = std::pair<status, optional_response_type>;
 
-	request_type map(const std::string &data) const {
+	request_type map(std::string_view data) const {
 		constexpr bool can_map = requires(request_type t) {
-			{ t.ParseFromString(std::declval<const std::string &>()) } -> std::same_as<bool>;
+			{
+				t.ParseFromArray(std::declval<const char *>(), std::declval<std::size_t>())
+			} -> std::same_as<bool>;
 		};
 		static_assert(can_map, "No known method to deserialize data");
 
 		request_type req;
-		if (!req.ParseFromString(data)) {
+
+		if (!req.ParseFromArray(data.data(), data.size())) {
 			throw std::runtime_error("Failed to deserialize data");
 		}
 

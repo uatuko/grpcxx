@@ -18,14 +18,14 @@ concept rpc_type = requires(T t) {
 
 	// Request
 	typename T::request_type;
-	{ t.map(std::declval<const std::string &>()) } -> std::same_as<typename T::request_type>;
+	{ t.map(std::declval<std::string_view>()) } -> std::same_as<typename T::request_type>;
 
 	// Response
 	typename T::response_type;
 	typename T::optional_response_type;
 	{
 		t.map(std::declval<const typename T::optional_response_type &>())
-		} -> std::same_as<std::string>;
+	} -> std::same_as<std::string>;
 
 	// Result
 	typename T::result_type;
@@ -37,17 +37,16 @@ concept rpc_type = requires(T t) {
 
 template <fixed_string N, concepts::rpc_type... R> class service {
 public:
-	using data_t     = std::string;
-	using response_t = std::pair<status, data_t>;
+	using response_t = std::pair<status, std::string>;
 
-	using handler_t  = std::function<response_t(const data_t &)>;
+	using handler_t  = std::function<response_t(std::string_view)>;
 	using handlers_t = std::unordered_map<std::string_view, handler_t>;
 
 	template <typename I> constexpr service(I &impl) {
 		std::apply(
 			[&](auto &&...args) {
 				auto helper = [&](const auto &rpc) {
-					auto handler = [&impl, &rpc](const data_t &data) -> response_t {
+					auto handler = [&impl, &rpc](std::string_view data) -> response_t {
 						using type = std::remove_cvref_t<decltype(rpc)>;
 
 						auto req    = rpc.map(data);
@@ -64,7 +63,7 @@ public:
 			std::tuple<R...>());
 	}
 
-	response_t call(std::string_view method, const std::string &data) {
+	response_t call(std::string_view method, std::string_view data) {
 		auto it = _handlers.find(method);
 		if (it == _handlers.end()) {
 			return {status::code_t::not_found, {}};
@@ -73,7 +72,7 @@ public:
 		return it->second(data);
 	}
 
-	constexpr std::string_view name() const noexcept { return {N}; };
+	constexpr std::string_view name() const noexcept { return {N}; }
 
 private:
 	handlers_t _handlers;
