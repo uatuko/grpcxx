@@ -3,6 +3,7 @@
 
 # build
 .build
+.xcode
 
 # local settings
 .local.env
