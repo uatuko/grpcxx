@@ -33,3 +33,10 @@ add_library(libnghttp2::nghttp2 ALIAS nghttp2_static)
 
 # protobuf
 find_package(Protobuf REQUIRED)
+
+# fmt
+FetchContent_Declare(fmt
+	URL      https://github.com/fmtlib/fmt/archive/refs/tags/10.1.1.tar.gz
+	URL_HASH SHA256=78b8c0a72b1c35e4443a7e308df52498252d1cefc2b08c9a97bc9ee6cfe61f8b
+)
+FetchContent_MakeAvailable(fmt)

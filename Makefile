@@ -4,9 +4,11 @@ buildfile = $(builddir)/build.ninja
 
 examplesdir = examples
 libdir      = lib
+srcdir      = src
 
 sources := $(shell find $(examplesdir) -type f -name '*.h' -o -name '*.cpp' -o -name '*.proto')
 sources += $(shell find $(libdir) -type f -name '*.h' -o -name '*.cpp')
+sources += $(shell find $(srcdir) -type f -name '*.h' -o -name '*.cpp')
 
 .PHONY: all clean examples lint lint\:ci lint\:fix
 
