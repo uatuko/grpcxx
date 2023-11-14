@@ -22,7 +22,7 @@ struct ServiceImpl {
 		return {grpcxx::status::code_t::unimplemented, std::nullopt};
 	}
 };
-}; // namespace Greeter
+} // namespace Greeter
 } // namespace v1
 } // namespace helloworld
 // ---- [end] generated code ---- //
