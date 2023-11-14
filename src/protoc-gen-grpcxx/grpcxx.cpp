@@ -15,8 +15,38 @@ bool Grpcxx::Generate(
 //   - protoc-gen-grpcxx: {}
 
 #pragma once
+
+#include "{}"
 )",
-		"0.0.0");
+		"0.0.0",
+		google::protobuf::compiler::StripProto(file->name()) + ".pb.h");
+
+	if (!file->package().empty()) {
+		output += '\n';
+
+		std::size_t start = 0;
+		for (auto end = file->package().find('.'); end != std::string::npos;
+			 end      = file->package().find('.', start)) {
+
+			output += fmt::format("namespace {} {{\n", file->package().substr(start, end - start));
+			start   = end + 1;
+		}
+		output += fmt::format("namespace {} {{\n", file->package().substr(start));
+	}
+
+	// TODO: service
+
+	if (!file->package().empty()) {
+		auto end = file->package().size();
+		for (auto pos = file->package().rfind('.'); pos != std::string::npos;
+			 pos      = file->package().rfind('.', end)) {
+
+			output +=
+				fmt::format("}} // namespace {}\n", file->package().substr(pos + 1, end - pos));
+			end = pos - 1;
+		}
+		output += fmt::format("}} // namespace {}\n", file->package().substr(0, end + 1));
+	}
 
 	std::unique_ptr<google::protobuf::io::ZeroCopyOutputStream> ostream(
 		context->Open(google::protobuf::compiler::StripProto(file->name()) + ".grpcxx.pb.h"));
