@@ -16,6 +16,9 @@ bool Grpcxx::Generate(
 
 #pragma once
 
+#include <grpcxx/rpc.h>
+#include <grpcxx/service.h>
+
 #include "{}"
 )",
 		"0.0.0",
@@ -34,7 +37,37 @@ bool Grpcxx::Generate(
 		output += fmt::format("namespace {} {{\n", file->package().substr(start));
 	}
 
-	// TODO: service
+	auto serviceCount = file->service_count();
+	for (int i = 0; i < serviceCount; i++) {
+		auto service = file->service(i);
+		output += fmt::format("namespace {} {{\n", service->name());
+		auto methodCount = service->method_count();
+		for (int j = 0; j < methodCount; j++) {
+			auto method = service->method(0);
+
+			output += fmt::format(
+				"using rpc{0} = grpcxx::rpc<\"{0}\", {1}, {2}>;\n\n",
+				method->name(),
+				method->input_type()->name(),
+				method->output_type()->name()
+			);
+		
+			output += fmt::format(
+				"using Service = grpcxx::service<\"{0}.{1}\", rpc{2}>;\n\n",
+				file->package(),
+				service->name(),
+				method->name()
+			);
+		}
+		output += 
+		R"(struct ServiceImpl {
+	template <typename T> typename T::result_type call(const typename T::request_type &) {
+		return {grpcxx::status::code_t::unimplemented, std::nullopt};
+	}
+};
+)";
+		output += fmt::format("}} // namespace {}\n", service->name());
+	}
 
 	if (!file->package().empty()) {
 		auto end = file->package().size();
