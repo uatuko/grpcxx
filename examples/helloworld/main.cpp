@@ -1,31 +1,8 @@
 #include <cstdio>
-#include <map>
-#include <string>
 
-#include <grpcxx/rpc.h>
 #include <grpcxx/server.h>
-#include <grpcxx/service.h>
 
-#include "helloworld/v1/greeter.pb.h"
-
-// ---- [start] generated code ---- //
-namespace helloworld {
-namespace v1 {
-namespace Greeter {
-using rpcHello =
-	grpcxx::rpc<"Hello", helloworld::v1::GreeterHelloRequest, helloworld::v1::GreeterHelloResponse>;
-
-using Service = grpcxx::service<"helloworld.v1.Greeter", rpcHello>;
-
-struct ServiceImpl {
-	template <typename T> typename T::result_type call(const typename T::request_type &) {
-		return {grpcxx::status::code_t::unimplemented, std::nullopt};
-	}
-};
-} // namespace Greeter
-} // namespace v1
-} // namespace helloworld
-// ---- [end] generated code ---- //
+#include "helloworld/v1/greeter.grpcxx.pb.h"
 
 using namespace helloworld::v1::Greeter;
 
