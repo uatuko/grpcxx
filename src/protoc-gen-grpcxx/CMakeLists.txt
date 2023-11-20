@@ -15,3 +15,8 @@ target_link_libraries(protoc-gen-grpcxx
 		protobuf::libprotobuf
 		protobuf::libprotoc
 )
+
+target_compile_definitions(protoc-gen-grpcxx
+	PRIVATE
+		VERSION="${PROJECT_VERSION}"
+)
