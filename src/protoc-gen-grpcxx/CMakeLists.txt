@@ -18,5 +18,6 @@ target_link_libraries(protoc-gen-grpcxx
 
 target_compile_definitions(protoc-gen-grpcxx
 	PRIVATE
-		VERSION="${PROJECT_VERSION}"
+		PLUGIN_NAME="$<TARGET_NAME:protoc-gen-grpcxx>"
+		PLUGIN_VERSION="${PROJECT_VERSION}"
 )
