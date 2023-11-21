@@ -10,3 +10,4 @@ include(cmake/dependencies.cmake)
 
 add_subdirectory(examples)
 add_subdirectory(lib)
+add_subdirectory(src)
