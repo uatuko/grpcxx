@@ -8,26 +8,81 @@ on:
       - main
 
 jobs:
-  build:
-    name: Build on ${{ matrix.os }} using ${{ matrix.compiler }}
+  linux:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow_ref }}-${{ github.job }}_${{ matrix.container }}-${{ matrix.compiler }}
+    container: ${{ matrix.container }}
+
     strategy:
+      fail-fast: false
       matrix:
         compiler:
           - g++
           - clang++
-        os:
-          - ubuntu-latest
-          - macos-latest
-    runs-on: ${{ matrix.os }}
+        container:
+          - ubuntu:23.04
+        include:
+          - compiler: g++
+            dependencies: g++
+          - compiler: clang++
+            dependencies: clang
+
     steps:
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            ${{ matrix.dependencies }} \
+            cmake ninja-build \
+            libprotobuf-dev
+
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path: .build/_deps
-          key: ${{ runner.arch }}_${{ matrix.os }}-${{ matrix.compiler }}-${{ hashFiles('cmake/dependencies.cmake') }}
+          path: .build
+          key: ${{ runner.arch }}_${{ matrix.container }}-${{ matrix.compiler }}-${{ hashFiles('cmake/dependencies.cmake') }}
+
       - name: Configure CMake
         run: |
-          cmake -B .build -DCMAKE_CXX_COMPILER=${{ matrix.compiler }} -DCMAKE_BUILD_TYPE=Release
+          cmake -B .build -G Ninja \
+            -DCMAKE_CXX_COMPILER=${{ matrix.compiler }} \
+            -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: |
+          cmake --build .build --config Release
+
+
+  macos:
+    runs-on: macos-latest
+    concurrency:
+      group: ${{ github.workflow_ref }}-${{ github.job }}_${{ matrix.compiler }}
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler:
+          - g++
+          - clang++
+
+    steps:
+      - name: Install dependencies
+        run: |
+          brew install \
+            protobuf@3 \
+            ninja
+          brew link protobuf@3
+
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: .build
+          key: ${{ runner.arch }}_${{ runner.os }}-${{ matrix.compiler }}-${{ hashFiles('cmake/dependencies.cmake') }}
+
+      - name: Configure CMake
+        run: |
+          cmake -B .build -G Ninja \
+            -DCMAKE_CXX_COMPILER=${{ matrix.compiler }} \
+            -DCMAKE_BUILD_TYPE=Release
       - name: Build
         run: |
           cmake --build .build --config Release
