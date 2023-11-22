@@ -1,6 +1,8 @@
 #include "echo-server.h"
 
+#include <array>
 #include <cstdio>
+#include <cstring>
 
 uv_loop_t *loop;
 

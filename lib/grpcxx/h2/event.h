@@ -18,10 +18,10 @@ struct event {
 		stream_header,
 	};
 
-	const std::string_view      data;
-	const std::optional<header> header    = std::nullopt;
-	const int32_t               stream_id = -1;
-	const type_t                type      = type_t::noop;
+	const std::string_view            data;
+	const std::optional<class header> header    = std::nullopt;
+	const int32_t                     stream_id = -1;
+	const type_t                      type      = type_t::noop;
 };
 } // namespace h2
 } // namespace grpcxx

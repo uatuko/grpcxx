@@ -34,7 +34,7 @@ public:
 	pool(std::size_t n);
 	pool(const pool &) = delete;
 
-	worker &worker() noexcept;
+	class worker &worker() noexcept;
 
 	awaiter schedule() noexcept;
 

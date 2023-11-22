@@ -35,7 +35,7 @@ jobs:
           apt-get install -y --no-install-recommends \
             ${{ matrix.dependencies }} \
             cmake ninja-build \
-            libprotobuf-dev libprotoc-dev
+            libprotobuf-dev libprotoc-dev protobuf-compiler
 
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
