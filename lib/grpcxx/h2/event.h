@@ -10,6 +10,8 @@
 namespace grpcxx {
 namespace h2 {
 struct event {
+	using header_t = std::optional<class header>;
+
 	enum struct type_t : uint8_t {
 		noop = 0,
 		stream_close,
@@ -18,10 +20,10 @@ struct event {
 		stream_header,
 	};
 
-	const std::string_view      data;
-	const std::optional<header> header    = std::nullopt;
-	const int32_t               stream_id = -1;
-	const type_t                type      = type_t::noop;
+	const std::string_view data;
+	const header_t         header    = std::nullopt;
+	const int32_t          stream_id = -1;
+	const type_t           type      = type_t::noop;
 };
 } // namespace h2
 } // namespace grpcxx

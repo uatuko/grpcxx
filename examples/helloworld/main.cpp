@@ -18,14 +18,14 @@ struct GreeterImpl {
 	template <typename T> typename T::result_type call(const typename T::request_type &) {
 		return {grpcxx::status::code_t::unimplemented, std::nullopt};
 	}
-
-	template <>
-	rpcHello::result_type call<rpcHello>(const helloworld::v1::GreeterHelloRequest &req) {
-		helloworld::v1::GreeterHelloResponse res;
-		res.set_message("Hello `" + req.name() + "` 👋");
-		return {grpcxx::status::code_t::ok, res};
-	}
 };
+
+template <>
+rpcHello::result_type GreeterImpl::call<rpcHello>(const helloworld::v1::GreeterHelloRequest &req) {
+	helloworld::v1::GreeterHelloResponse res;
+	res.set_message("Hello `" + req.name() + "` 👋");
+	return {grpcxx::status::code_t::ok, res};
+}
 
 int main() {
 	GreeterImpl greeter;

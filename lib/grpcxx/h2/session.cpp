@@ -1,6 +1,8 @@
 #include "session.h"
 
 #include <array>
+#include <cstring>
+#include <stdexcept>
 
 namespace grpcxx {
 namespace h2 {
@@ -37,11 +39,11 @@ session::~session() {
 void session::data(int32_t stream_id, std::string &&data) {
 	_data = std::move(data);
 	nghttp2_data_provider provider{
-		.read_callback = read_cb,
 		.source =
 			{
 				.ptr = &_data,
 			},
+		.read_callback = read_cb,
 	};
 
 	if (auto r = nghttp2_submit_data(_session, NGHTTP2_FLAG_NONE, stream_id, &provider); r != 0) {

@@ -1,0 +1,88 @@
+name: Build
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow_ref }}-${{ github.job }}_${{ matrix.container }}-${{ matrix.compiler }}
+    container: ${{ matrix.container }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler:
+          - g++
+          - clang++
+        container:
+          - ubuntu:23.04
+        include:
+          - compiler: g++
+            dependencies: g++
+          - compiler: clang++
+            dependencies: clang
+
+    steps:
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            ${{ matrix.dependencies }} \
+            cmake ninja-build \
+            libprotobuf-dev libprotoc-dev protobuf-compiler
+
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: .build
+          key: ${{ runner.arch }}_${{ matrix.container }}-${{ matrix.compiler }}-${{ hashFiles('cmake/dependencies.cmake') }}
+
+      - name: Configure CMake
+        run: |
+          cmake -B .build -G Ninja \
+            -DCMAKE_CXX_COMPILER=${{ matrix.compiler }} \
+            -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: |
+          cmake --build .build --config Release
+
+
+  macos:
+    runs-on: macos-13 # [Nov. 2023] `macos-latest` is pointing to `macos-12` which doesn't support coroutines.
+    concurrency:
+      group: ${{ github.workflow_ref }}-${{ github.job }}_${{ matrix.compiler }}
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler:
+          - g++
+          - clang++
+
+    steps:
+      - name: Install dependencies
+        run: |
+          brew install \
+            protobuf@3 \
+            ninja
+          brew link protobuf@3
+
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: .build
+          key: ${{ runner.arch }}_${{ runner.os }}-${{ matrix.compiler }}-${{ hashFiles('cmake/dependencies.cmake') }}
+
+      - name: Configure CMake
+        run: |
+          cmake -B .build -G Ninja \
+            -DCMAKE_CXX_COMPILER=${{ matrix.compiler }} \
+            -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: |
+          cmake --build .build --config Release
