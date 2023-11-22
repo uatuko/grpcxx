@@ -35,7 +35,7 @@ jobs:
           apt-get install -y --no-install-recommends \
             ${{ matrix.dependencies }} \
             cmake ninja-build \
-            libprotobuf-dev
+            libprotobuf-dev libprotoc-dev
 
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
@@ -54,7 +54,7 @@ jobs:
 
 
   macos:
-    runs-on: macos-latest
+    runs-on: macos-13 # [Nov. 2023] `macos-latest` is pointing to `macos-12` which doesn't support coroutines.
     concurrency:
       group: ${{ github.workflow_ref }}-${{ github.job }}_${{ matrix.compiler }}
     strategy:
