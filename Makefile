@@ -11,8 +11,10 @@ sources += $(shell find $(libdir) -type f -name '*.h' -o -name '*.cpp')
 sources += $(shell find $(srcdir) -type f -name '*.h' -o -name '*.cpp')
 
 .PHONY: all clean examples lint lint\:ci lint\:fix
+.SILENT: lint lint\:fix
 
-all: lint
+all: $(buildfile)
+	cmake --build $(builddir) --target all
 
 $(buildfile):
 	cmake -B $(builddir) -G Ninja
@@ -35,4 +37,3 @@ lint\:ci:
 
 lint\:fix:
 	clang-format --style=file -i $(sources)
-
