@@ -30,9 +30,10 @@ concept rpc_type = requires(T t) {
 
 	// Result
 	typename T::result_type;
-	requires std::same_as<
-		typename T::result_type,
-		std::pair<grpcxx::status, typename T::optional_response_type>>;
+	requires requires(typename T::result_type t) {
+		{ t.status } -> std::same_as<grpcxx::status &>;
+		{ t.response } -> std::same_as<typename T::optional_response_type &>;
+	};
 };
 } // namespace concepts
 
@@ -53,7 +54,7 @@ public:
 						auto req    = rpc.map(data);
 						auto result = std::invoke(&I::template call<type>, impl, req);
 
-						return {result.first, rpc.map(result.second)};
+						return {result.status, rpc.map(result.response)};
 					};
 
 					_handlers.insert({rpc.method, handler});
