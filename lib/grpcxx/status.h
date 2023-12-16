@@ -26,8 +26,16 @@ public:
 	};
 
 	status(code_t code = code_t::ok) : _code(code), _str() {}
+	status(code_t code, std::string &&details) :
+		_code(code), _details(std::move(details)), _str() {}
 
-	operator std::string_view() {
+	operator std::string_view() const { return str(); }
+
+	code_t code() const noexcept { return _code; }
+
+	const std::string &details() const noexcept { return _details; }
+
+	std::string_view str() const {
 		if (_str.empty()) {
 			_str = std::to_string(static_cast<int8_t>(_code));
 		}
@@ -35,10 +43,10 @@ public:
 		return _str;
 	}
 
-	code_t code() const noexcept { return _code; }
-
 private:
 	code_t      _code;
-	std::string _str;
+	std::string _details;
+
+	mutable std::string _str;
 };
 } // namespace grpcxx

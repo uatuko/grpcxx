@@ -13,8 +13,8 @@ public:
 
 	int32_t id() const noexcept { return _id; }
 
-	std::string      bytes() const noexcept { return _msg.bytes(); }
-	std::string_view status() noexcept { return _status; }
+	std::string bytes() const noexcept { return _msg.bytes(); }
+	const auto &status() noexcept { return _status; }
 
 	void data(std::string &&d) noexcept { _msg = std::move(d); }
 	void status(class status &&s) noexcept { _status = std::move(s); }

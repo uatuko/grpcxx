@@ -133,10 +133,12 @@ void conn::write(response resp) noexcept {
 	_session.data(resp.id(), resp.bytes());
 	write();
 
+	const auto &status = resp.status();
 	_session.trailers(
 		resp.id(),
 		{
-			{"grpc-status", resp.status()},
+			{"grpc-status", status},
+			{"grpc-status-details-bin", status.details()},
 		});
 
 	write();
