@@ -102,6 +102,10 @@ void session::headers(int32_t stream_id, h2::headers hdrs) const {
 	nv.reserve(hdrs.size());
 
 	for (const auto &h : hdrs) {
+		if (h.value.empty()) {
+			continue;
+		}
+
 		nv.push_back({
 			const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(h.name.data())),
 			const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(h.value.data())),
@@ -175,6 +179,10 @@ void session::trailers(int32_t stream_id, h2::headers hdrs) const {
 	nv.reserve(hdrs.size());
 
 	for (const auto &h : hdrs) {
+		if (h.value.empty()) {
+			continue;
+		}
+
 		nv.push_back({
 			const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(h.name.data())),
 			const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(h.value.data())),
