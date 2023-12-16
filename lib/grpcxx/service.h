@@ -6,6 +6,7 @@
 #include <tuple>
 #include <unordered_map>
 
+#include "context.h"
 #include "fixed_string.h"
 #include "status.h"
 
@@ -41,18 +42,19 @@ template <fixed_string N, concepts::rpc_type... R> class service {
 public:
 	using response_t = std::pair<status, std::string>;
 
-	using handler_t  = std::function<response_t(std::string_view)>;
+	using handler_t  = std::function<response_t(context &, std::string_view)>;
 	using handlers_t = std::unordered_map<std::string_view, handler_t>;
 
 	template <typename I> constexpr service(I &impl) {
 		std::apply(
 			[&](auto &&...args) {
 				auto helper = [&](const auto &rpc) {
-					auto handler = [&impl, &rpc](std::string_view data) -> response_t {
+					auto handler = [&impl,
+									&rpc](context &ctx, std::string_view data) -> response_t {
 						using type = std::remove_cvref_t<decltype(rpc)>;
 
 						auto req    = rpc.map(data);
-						auto result = std::invoke(&I::template call<type>, impl, req);
+						auto result = std::invoke(&I::template call<type>, impl, ctx, req);
 
 						return {result.status, rpc.map(result.response)};
 					};
@@ -65,13 +67,13 @@ public:
 			std::tuple<R...>());
 	}
 
-	response_t call(std::string_view method, std::string_view data) {
+	response_t call(context &ctx, std::string_view method, std::string_view data) {
 		auto it = _handlers.find(method);
 		if (it == _handlers.end()) {
 			return {status::code_t::not_found, {}};
 		}
 
-		return it->second(data);
+		return it->second(ctx, data);
 	}
 
 	constexpr std::string_view name() const noexcept { return {N}; }

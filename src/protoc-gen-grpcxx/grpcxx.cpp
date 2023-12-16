@@ -61,7 +61,8 @@ bool Grpcxx::Generate(
 		}
 
 		output += R"(struct ServiceImpl {
-	template <typename T> typename T::result_type call(const typename T::request_type &) {
+	template <typename T>
+	typename T::result_type call(grpcxx::context &, const typename T::request_type &) {
 		return {grpcxx::status::code_t::unimplemented, std::nullopt};
 	}
 };

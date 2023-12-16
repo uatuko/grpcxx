@@ -52,7 +52,7 @@ void conn::close_cb(uv_handle_t *handle) {
 }
 
 void conn::read(std::size_t n) {
-	for (const auto &ev : _session.read({_buf.data(), n})) {
+	for (auto &ev : _session.read({_buf.data(), n})) {
 		if (ev.stream_id <= 0) {
 			continue;
 		}
@@ -78,7 +78,7 @@ void conn::read(std::size_t n) {
 		}
 
 		case h2::event::type_t::stream_header: {
-			req.header(ev.header->name, ev.header->value);
+			req.header(std::move(ev.header->name), std::move(ev.header->value));
 			break;
 		}
 

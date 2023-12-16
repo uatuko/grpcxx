@@ -8,7 +8,7 @@ request::operator bool() const noexcept {
 	return (!invalid() && !_service.empty() && !_method.empty());
 }
 
-void request::header(std::string_view name, std::string_view value) noexcept {
+void request::header(std::string &&name, std::string &&value) noexcept {
 	// Avoid processing further if the request is already invalid
 	if (invalid()) {
 		return;
@@ -57,6 +57,13 @@ void request::header(std::string_view name, std::string_view value) noexcept {
 
 		return;
 	}
+
+	// Keep a copy of "custom metadata" (i.e. headers that don't start with ':' or "grpc-")
+	if (name.starts_with(':') || name.starts_with("grpc-")) {
+		return;
+	}
+
+	_metadata.emplace(std::move(name), std::move(value));
 }
 
 bool request::invalid() const noexcept {

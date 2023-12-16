@@ -85,13 +85,13 @@ int session::header_cb(
 	const uint8_t *value, size_t valuelen, uint8_t flags, void *vsess) {
 	auto *sess = static_cast<class session *>(vsess);
 	sess->emit({
+		.stream_id = frame->hd.stream_id,
+		.type      = event::type_t::stream_header,
 		.header =
 			header{
 				.name  = {reinterpret_cast<const char *>(name), namelen},
 				.value = {reinterpret_cast<const char *>(value), valuelen},
 			},
-		.stream_id = frame->hd.stream_id,
-		.type      = event::type_t::stream_header,
 	});
 
 	return 0;

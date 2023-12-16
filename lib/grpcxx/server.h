@@ -7,8 +7,9 @@
 
 #include <uv.h>
 
+#include "context.h"
 #include "pool.h"
-#include "service.h"
+#include "status.h"
 
 namespace grpcxx {
 // Forward declarations
@@ -21,7 +22,9 @@ class response;
 
 class server {
 public:
-	using fn_t = std::function<std::pair<status, std::string>(std::string_view, std::string_view)>;
+	using fn_t = std::function<std::pair<status, std::string>(
+		context &, std::string_view, std::string_view)>;
+
 	using services_t = std::unordered_map<std::string_view, fn_t>;
 
 	server(const server &) = delete;
