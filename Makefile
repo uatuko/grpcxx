@@ -2,11 +2,13 @@ builddir  = .build
 bindir    = $(builddir)/bin
 buildfile = $(builddir)/build.ninja
 
-examplesdir = examples
-libdir      = lib
-srcdir      = src
+examplesdir    = examples
+experimentsdir = .experiments
+libdir         = lib
+srcdir         = src
 
 sources := $(shell find $(examplesdir) -type f -name '*.h' -o -name '*.cpp' -o -name '*.proto')
+sources += $(shell find $(experimentsdir) -type f -name '*.h' -o -name '*.cpp' -o -name '*.proto')
 sources += $(shell find $(libdir) -type f -name '*.h' -o -name '*.cpp')
 sources += $(shell find $(srcdir) -type f -name '*.h' -o -name '*.cpp')
 
@@ -24,6 +26,9 @@ clean:
 
 examples: $(buildfile)
 	cmake --build $(builddir) --target examples
+
+experiments: $(buildfile)
+	cmake --build $(builddir) --target experiments
 
 lint:
 ifeq (, $(shell which clang-format))
