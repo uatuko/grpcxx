@@ -71,9 +71,10 @@ detail::response server::process(const detail::request &req) const noexcept {
 		return {req.id(), status::code_t::not_found};
 	}
 
+	context          ctx;
 	detail::response resp(req.id());
 	try {
-		auto r = it->second(req.method(), req.data());
+		auto r = it->second(ctx, req.method(), req.data());
 		resp.status(std::move(r.first));
 		resp.data(std::move(r.second));
 	} catch (std::exception &e) {

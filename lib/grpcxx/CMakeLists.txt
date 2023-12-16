@@ -2,6 +2,7 @@ add_library(grpcxx)
 target_sources(grpcxx
 	PRIVATE
 		conn.cpp
+		context.cpp
 		message.cpp
 		pool.cpp
 		request.cpp
@@ -10,6 +11,7 @@ target_sources(grpcxx
 	PUBLIC
 		FILE_SET headers TYPE HEADERS
 		FILES
+			context.h
 			fixed_string.h
 			pool.h
 			rpc.h
