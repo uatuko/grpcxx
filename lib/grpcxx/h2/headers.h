@@ -7,8 +7,8 @@
 namespace grpcxx {
 namespace h2 {
 struct header {
-	const std::string name;
-	const std::string value;
+	std::string name;
+	std::string value;
 };
 
 struct header_view {

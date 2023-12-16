@@ -71,7 +71,7 @@ detail::response server::process(const detail::request &req) const noexcept {
 		return {req.id(), status::code_t::not_found};
 	}
 
-	context          ctx;
+	context          ctx(req);
 	detail::response resp(req.id());
 	try {
 		auto r = it->second(ctx, req.method(), req.data());

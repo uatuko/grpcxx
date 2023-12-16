@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <unordered_map>
 
 #include "message.h"
 
@@ -8,6 +9,8 @@ namespace grpcxx {
 namespace detail {
 class request {
 public:
+	using metadata_t = std::unordered_map<std::string, std::string>;
+
 	request(request &&)      = default;
 	request(const request &) = delete;
 	request(int32_t id);
@@ -18,10 +21,12 @@ public:
 
 	std::string_view data() const noexcept { return _msg.data(); }
 
+	const metadata_t &metadata() const noexcept { return _metadata; }
+
 	const std::string &method() const noexcept { return _method; }
 	const std::string &service() const noexcept { return _service; }
 
-	void header(std::string_view name, std::string_view value) noexcept;
+	void header(std::string &&name, std::string &&value) noexcept;
 
 	bool invalid() const noexcept;
 
@@ -44,7 +49,8 @@ private:
 	uint8_t _flags = 0x00;
 	int32_t _id;
 
-	message _msg;
+	metadata_t _metadata;
+	message    _msg;
 
 	std::string _method;
 	std::string _service;

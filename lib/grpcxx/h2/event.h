@@ -21,9 +21,10 @@ struct event {
 	};
 
 	const std::string_view data;
-	const header_t         header    = std::nullopt;
 	const int32_t          stream_id = -1;
 	const type_t           type      = type_t::noop;
+
+	header_t header = std::nullopt;
 };
 } // namespace h2
 } // namespace grpcxx
