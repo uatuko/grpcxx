@@ -32,7 +32,7 @@ target_include_directories(nghttp2_static
 add_library(libnghttp2::nghttp2 ALIAS nghttp2_static)
 
 # protobuf
-find_package(Protobuf REQUIRED)
+find_package(Protobuf 3.15.0 REQUIRED)
 
 # fmt
 FetchContent_Declare(fmt
