@@ -6,13 +6,15 @@
 🚀 Blazing fast gRPC C++ Server implemented using modern standards (C++20).
 
 ## Features
+
 * Fast - More than 2x faster compared to the official implementation(s).
 * Simple - Overall smaller codebase and 95% less generated code compared to the official implementation.
 * Flexible - The application code is given greater implementation choice by using C++ concepts instead of being restricted to one choice.
 
+
 ## Benchmarks
 
-> Please refer to https://github.com/uatuko/grpcxx/pull/2 for detailed benchmark results.
+> You can find more detailed benchmark results in https://github.com/uatuko/grpcxx/pull/2.
 
 |                               | 1a  | 1b   | 2a  | 2b   | 3a   | 3b   |
 | ----------------------------- | --- | ---- | --- | ---- | ---- | ---- |
@@ -20,6 +22,11 @@
 | grpc-go v1.56.2               | 27k | 103k | 94k | 191k | 90k  | **308k** |
 | grpcxx (hardware concurrency) | 31k | 149k | 89k | **346k** | 74k  | 337k |
 | grpcxx (2 workers)            | 31k | 143k | 98k | 341k | 99k  | **355k** |
+
+
+## Documentation
+
+You can find a bit more detailed documentation in [docs/](docs/README.md).
 
 
 ## Getting started
