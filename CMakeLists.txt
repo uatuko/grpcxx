@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.23)
-project(grpcxx VERSION 0.0.1 LANGUAGES CXX)
+project(grpcxx VERSION 0.1.0 LANGUAGES CXX)
 
 cmake_policy(SET CMP0135 NEW)
 
