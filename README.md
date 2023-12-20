@@ -2,6 +2,7 @@
 
 [![license](https://img.shields.io/badge/license-MIT-green)](https://raw.githubusercontent.com/uatuko/grpcxx/main/LICENSE)
 [![build](https://github.com/uatuko/grpcxx/actions/workflows/build.yaml/badge.svg?branch=main)](https://github.com/uatuko/grpcxx/actions/workflows/build.yaml)
+[![release](https://img.shields.io/github/v/release/uatuko/grpcxx)](https://github.com/uatuko/grpcxx/releases)
 
 🚀 Blazing fast gRPC C++ Server implemented using modern standards (C++20).
 
@@ -45,8 +46,8 @@ e.g.
 ```cmake
 # grpcxx
 FetchContent_Declare(grpcxx
-	URL      https://github.com/uatuko/grpcxx/archive/c6934c3223a76f50439bb1dda98aa25482829b95.tar.gz
-	URL_HASH SHA256=df156fee18d1b96912d96a460d4fb3515f04630813ad6a6ad41bb9f06e014bb4
+  URL      https://github.com/uatuko/grpcxx/archive/c6934c3223a76f50439bb1dda98aa25482829b95.tar.gz
+  URL_HASH SHA256=df156fee18d1b96912d96a460d4fb3515f04630813ad6a6ad41bb9f06e014bb4
 )
 FetchContent_MakeAvailable(grpcxx)
 ```
@@ -101,10 +102,10 @@ using namespace helloworld::v1::Greeter;
 // Implement rpc application logic using template specialisation for generated `ServiceImpl` struct
 template <>
 rpcHello::result_type ServiceImpl::call<rpcHello>(
-	grpcxx::context &, const GreeterHelloRequest &req) {
-	GreeterHelloResponse res;
-	res.set_message("Hello `" + req.name() + "` 👋");
-	return {grpcxx::status::code_t::ok, res};
+  grpcxx::context &, const GreeterHelloRequest &req) {
+  GreeterHelloResponse res;
+  res.set_message("Hello `" + req.name() + "` 👋");
+  return {grpcxx::status::code_t::ok, res};
 }
 ```
 
