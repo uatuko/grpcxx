@@ -76,8 +76,8 @@ e.g.
 
 This will generate 3 files, which you'll need to compile and include in your build.
 ```
-❯ tree
-.
+❯ tree /path/to/output
+/path/to/output
 └── helloworld
   └── v1
     ├── greeter.grpcxx.pb.h
