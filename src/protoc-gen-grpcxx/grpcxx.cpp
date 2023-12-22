@@ -44,6 +44,9 @@ bool Grpcxx::Generate(
 		auto service  = file->service(i);
 		output       += fmt::format("namespace {} {{\n", service->name());
 
+		std::string tmp = fmt::format(
+			"using Service = grpcxx::service<\"{}.{}\"", file->package(), service->name());
+
 		for (int j = 0; j < service->method_count(); j++) {
 			auto method = service->method(j);
 
@@ -53,12 +56,10 @@ bool Grpcxx::Generate(
 				method->input_type()->name(),
 				method->output_type()->name());
 
-			output += fmt::format(
-				"using Service = grpcxx::service<\"{}.{}\", rpc{}>;\n\n",
-				file->package(),
-				service->name(),
-				method->name());
+			tmp += fmt::format(", rpc{}", method->name());
 		}
+
+		output += tmp + ">;\n\n";
 
 		output += R"(struct ServiceImpl {
 	template <typename T>
