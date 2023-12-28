@@ -50,11 +50,31 @@ bool Grpcxx::Generate(
 		for (int j = 0; j < service->method_count(); j++) {
 			auto method = service->method(j);
 
+			// Map proto types to c++ types
+			// e.g. `google.protobuf.Empty` -> `google::protobuf::Empty`
+			auto mapper = [&file](const google::protobuf::Descriptor *t) -> std::string {
+				auto name = t->full_name();
+				if (name.starts_with(file->package())) {
+					name = name.substr(file->package().size() + 1);
+				}
+
+				std::string result;
+				std::size_t start = 0;
+				for (auto end = name.find('.'); end != std::string::npos;
+					 end      = name.find('.', start)) {
+					result += name.substr(start, end - start) + "::";
+					start   = end + 1;
+				}
+				result += name.substr(start);
+
+				return result;
+			};
+
 			output += fmt::format(
 				"using rpc{0} = grpcxx::rpc<\"{0}\", {1}, {2}>;\n\n",
 				method->name(),
-				method->input_type()->name(),
-				method->output_type()->name());
+				mapper(method->input_type()),
+				mapper(method->output_type()));
 
 			tmp += fmt::format(", rpc{}", method->name());
 		}
