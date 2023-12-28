@@ -53,18 +53,19 @@ bool Grpcxx::Generate(
 			// Map proto types to c++ types
 			// e.g. `google.protobuf.Empty` -> `google::protobuf::Empty`
 			auto mapper = [&file](const google::protobuf::Descriptor *t) -> std::string {
-				if (t->full_name().starts_with(file->package())) {
-					return t->name();
+				auto name = t->full_name();
+				if (name.starts_with(file->package())) {
+					name = name.substr(file->package().size() + 1);
 				}
 
 				std::string result;
 				std::size_t start = 0;
-				for (auto end = t->full_name().find('.'); end != std::string::npos;
-					 end      = t->full_name().find('.', start)) {
-					result += t->full_name().substr(start, end - start) + "::";
+				for (auto end = name.find('.'); end != std::string::npos;
+					 end      = name.find('.', start)) {
+					result += name.substr(start, end - start) + "::";
 					start   = end + 1;
 				}
-				result += t->full_name().substr(start);
+				result += name.substr(start);
 
 				return result;
 			};
