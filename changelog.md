@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.3 - 28th December, 2023
+
+* Fix to map types correctly when generating RPC definitions (#16).
+
 ## 0.1.2 - 28th December, 2023
 
 * Fix to include `<cstdint>` for fixed width integer types.
