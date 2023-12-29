@@ -46,8 +46,8 @@ e.g.
 ```cmake
 # grpcxx
 FetchContent_Declare(grpcxx
-  URL      https://github.com/uatuko/grpcxx/archive/refs/tags/v0.1.0.tar.gz
-  URL_HASH SHA256=0069925a1db15e9d0601458063ec752513e66ff721eac53cb7e0a1b9f780b0db
+  URL      https://github.com/uatuko/grpcxx/archive/refs/tags/v0.1.3.tar.gz
+  URL_HASH SHA256=441ca21bed3c0413623440c1608da44e60931631af1dc609c18e4a955f8cb3a5
 )
 FetchContent_MakeAvailable(grpcxx)
 ```
