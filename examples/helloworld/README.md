@@ -31,10 +31,10 @@ implements the RPC logic by specialising the template `call()` method in `Servic
 The generated `ServiceImpl` would look like this;
 ```cpp
 struct ServiceImpl {
-	template <typename T>
-	typename T::result_type call(grpcxx::context &, const typename T::request_type &) {
-		return {grpcxx::status::code_t::unimplemented, std::nullopt};
-	}
+  template <typename T>
+  typename T::result_type call(grpcxx::context &, const typename T::request_type &) {
+    return {grpcxx::status::code_t::unimplemented, std::nullopt};
+  }
 };
 ```
 
@@ -42,10 +42,10 @@ Here's an extract of the RPC implementation to send back a response.
 ```cpp
 template <>
 rpcHello::result_type ServiceImpl::call<rpcHello>(
-	grpcxx::context &, const GreeterHelloRequest &req) {
-	GreeterHelloResponse res;
-	res.set_message("Hello `" + req.name() + "` 👋");
-	return {grpcxx::status::code_t::ok, res};
+  grpcxx::context &, const GreeterHelloRequest &req) {
+  GreeterHelloResponse res;
+  res.set_message("Hello `" + req.name() + "` 👋");
+  return {grpcxx::status::code_t::ok, res};
 }
 ```
 
