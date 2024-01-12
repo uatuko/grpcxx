@@ -24,8 +24,8 @@ private:
 	handles_t  _handles;
 	std::mutex _mutex;
 
-	uv_loop_t  _loop;
 	uv_async_t _async;
+	uv_loop_t  _loop;
 };
 } // namespace detail
 } // namespace grpcxx

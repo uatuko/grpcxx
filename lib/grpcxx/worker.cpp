@@ -2,7 +2,7 @@
 
 namespace grpcxx {
 namespace detail {
-worker::worker() : _handles(), _loop(), _mutex() {
+worker::worker() : _async(), _handles(), _loop(), _mutex() {
 	uv_loop_init(&_loop);
 }
 
