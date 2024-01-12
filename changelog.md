@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.4 - 12th January, 2024
+
+* Fix to ensure idle connections don't block worker threads (#20).
+
 ## 0.1.3 - 28th December, 2023
 
 * Fix to map types correctly when generating RPC definitions (#16).
