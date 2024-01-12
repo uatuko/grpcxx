@@ -1,6 +1,5 @@
 #pragma once
 
-#include <condition_variable>
 #include <coroutine>
 #include <queue>
 #include <thread>
@@ -22,11 +21,11 @@ public:
 private:
 	using handles_t = std::queue<std::coroutine_handle<>>;
 
-	std::condition_variable _cv;
-	handles_t               _handles;
-	std::mutex              _mutex;
+	handles_t  _handles;
+	std::mutex _mutex;
 
-	uv_loop_t _loop;
+	uv_async_t _async;
+	uv_loop_t  _loop;
 };
 } // namespace detail
 } // namespace grpcxx
