@@ -15,12 +15,13 @@
 
 ## Benchmarks
 
-> You can find more detailed benchmark results in https://github.com/uatuko/grpcxx/pull/2.
+> You can find more detailed benchmark results in https://github.com/uatuko/grpcxx/pull/2 and https://github.com/uatuko/grpcxx/issues/21#issuecomment-1890901856.
 
 |                               | 1a  | 1b   | 2a  | 2b   | 3a   | 3b   |
 | ----------------------------- | --- | ---- | --- | ---- | ---- | ---- |
 | gRPC v1.48.4 (callback)       | 25k | 87k  | 76k | **152k** | 96k  | 142k |
 | grpc-go v1.56.2               | 27k | 103k | 94k | 191k | 90k  | **308k** |
+| Rust (tonic v0.10.2)[^1]      | 29k | 66k  | 95k | 176k | 68k  | **212k** |
 | grpcxx (hardware concurrency) | 31k | 149k | 89k | **346k** | 74k  | 337k |
 | grpcxx (2 workers)            | 31k | 143k | 98k | 341k | 99k  | **355k** |
 
@@ -126,3 +127,7 @@ server.add(service); // Add the service to the server instance
 std::printf("Listening on [127.0.0.1:7000] ...\n");
 server.run("127.0.0.1", 7000); // Listen and serve
 ```
+
+
+[^1]: Rust benchmarks were run on a different device with comparable CPU and memory to the rest of the benchmarks but on
+a different OS version.
