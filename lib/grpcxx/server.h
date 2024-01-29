@@ -3,20 +3,19 @@
 #include <functional>
 #include <string>
 #include <string_view>
+#include <thread>
 #include <unordered_map>
 
-#include <uv.h>
+#include <asio/awaitable.hpp>
+#include <asio/io_context.hpp>
+#include <asio/ip/tcp.hpp>
 
 #include "context.h"
-#include "pool.h"
 #include "status.h"
 
 namespace grpcxx {
 // Forward declarations
 namespace detail {
-struct coroutine;
-
-class request;
 class response;
 } // namespace detail
 
@@ -37,18 +36,13 @@ public:
 
 	const auto &services() const noexcept { return _services; }
 
-	void run(const std::string_view &ip, int port);
+	void run(const std::string_view ip, int port);
 
 private:
-	static void conn_cb(uv_stream_t *stream, int status);
+	asio::awaitable<void> conn(asio::ip::tcp::socket sock);
+	detail::response      process(const detail::request &req) const noexcept;
 
-	detail::coroutine accept(uv_stream_t *stream);
-	detail::response  process(const detail::request &req) const noexcept;
-
-	uv_tcp_t  _handle;
-	uv_loop_t _loop;
-
-	detail::pool _pool;
-	services_t   _services;
+	asio::io_context _ctx;
+	services_t       _services;
 };
 } // namespace grpcxx

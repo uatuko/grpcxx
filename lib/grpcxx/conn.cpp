@@ -1,57 +1,16 @@
 #include "conn.h"
 
+#include <asio/as_tuple.hpp>
+#include <asio/use_awaitable.hpp>
+#include <asio/write.hpp>
+
 namespace grpcxx {
 namespace detail {
-conn::conn(uv_tcp_t *handle) noexcept :
-	_buf(), _eos(false), _h(nullptr), _handle(handle), _reqs(), _session(), _streams() {
-	_handle->data = this;
+conn::conn(asio::ip::tcp::socket &&sock) noexcept :
+	_buf(), _eos(false), _session(), _sock(std::move(sock)), _streams() {}
 
-	uv_read_start(
-		reinterpret_cast<uv_stream_t *>(_handle),
-		[](uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf) {
-			auto *c = static_cast<conn *>(handle->data);
-			*buf    = uv_buf_init(c->_buf.data(), c->_buf.capacity());
-		},
-		[](uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf) {
-			if (nread <= 0) {
-				if (nread < 0) {
-					uv_close(reinterpret_cast<uv_handle_t *>(stream), close_cb);
-				}
-
-				return;
-			}
-
-			auto *c = static_cast<conn *>(stream->data);
-
-			try {
-				c->read(nread);
-			} catch (...) {
-				uv_close(reinterpret_cast<uv_handle_t *>(stream), close_cb);
-				return;
-			}
-		});
-}
-
-conn::requests_t conn::await_resume() noexcept {
-	_h = nullptr;
-
-	if (_reqs.empty()) {
-		return {};
-	}
-
-	auto reqs = std::move(_reqs);
-	_reqs     = requests_t();
-
-	return reqs;
-}
-
-void conn::close_cb(uv_handle_t *handle) {
-	auto *c = static_cast<conn *>(handle->data);
-	c->_eos = true;
-	c->resume();
-}
-
-void conn::read(std::size_t n) {
+conn::requests_t conn::read(std::size_t n) {
+	requests_t reqs;
 	for (auto &ev : _session.read({_buf.data(), n})) {
 		if (ev.stream_id <= 0) {
 			continue;
@@ -72,7 +31,7 @@ void conn::read(std::size_t n) {
 		}
 
 		case h2::event::type_t::stream_end: {
-			_reqs.push_front(std::move(req));
+			reqs.push_front(std::move(req));
 			_streams.erase(ev.stream_id);
 			break;
 		}
@@ -87,42 +46,39 @@ void conn::read(std::size_t n) {
 		}
 	}
 
-	write();
-
-	if (!_reqs.empty()) {
-		resume();
-	}
+	return reqs;
 }
 
-void conn::resume() noexcept {
-	if (_h) {
-		_h.resume();
+asio::awaitable<conn::requests_t> conn::reqs() noexcept {
+	auto [ec, n] = co_await _sock.async_read_some(
+		asio::buffer(_buf.data(), _buf.capacity()), asio::as_tuple(asio::use_awaitable));
+
+	if (ec) {
+		// TODO: handle errors
+		_eos = true;
+		co_return requests_t{};
 	}
+
+	requests_t reqs;
+	try {
+		reqs = read(n);
+	} catch (std::exception &) {
+		// TODO: handle errors
+		_eos = true;
+		co_return requests_t{};
+	}
+
+	co_await write();
+	co_return reqs;
 }
 
-void conn::write() noexcept {
-	auto *bytes = new std::string();
+asio::awaitable<void> conn::write() {
 	for (auto chunk = _session.pending(); chunk.size() > 0; chunk = _session.pending()) {
-		bytes->append(chunk);
-	}
-
-	if (bytes->empty()) {
-		return;
-	}
-
-	auto  buf = uv_buf_init(const_cast<char *>(bytes->data()), bytes->size());
-	auto *req = new uv_write_t();
-	req->data = bytes;
-
-	if (auto r = uv_write(req, reinterpret_cast<uv_stream_t *>(_handle), &buf, 1, write_cb);
-		r != 0) {
-		// FIXME: error handling
-		delete bytes;
-		delete req;
+		co_await asio::async_write(_sock, asio::buffer(chunk), asio::use_awaitable);
 	}
 }
 
-void conn::write(response resp) noexcept {
+asio::awaitable<void> conn::write(response resp) noexcept {
 	_session.headers(
 		resp.id(),
 		{
@@ -131,7 +87,7 @@ void conn::write(response resp) noexcept {
 		});
 
 	_session.data(resp.id(), resp.bytes());
-	write();
+	co_await write();
 
 	const auto &status = resp.status();
 	_session.trailers(
@@ -141,18 +97,7 @@ void conn::write(response resp) noexcept {
 			{"grpc-status-details-bin", status.details()},
 		});
 
-	write();
-}
-
-void conn::write_cb(uv_write_t *req, int status) {
-	if (status != 0) {
-		// TODO: error handling
-	}
-
-	auto *str = static_cast<std::string *>(req->data);
-	delete str;
-
-	delete req;
+	co_await write();
 }
 } // namespace detail
 } // namespace grpcxx

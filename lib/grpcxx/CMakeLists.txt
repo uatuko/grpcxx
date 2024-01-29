@@ -4,26 +4,21 @@ target_sources(grpcxx
 		conn.cpp
 		context.cpp
 		message.cpp
-		pool.cpp
 		request.cpp
 		server.cpp
-		worker.cpp
 	PUBLIC
 		FILE_SET headers TYPE HEADERS
 		FILES
 			context.h
 			fixed_string.h
-			pool.h
 			rpc.h
 			server.h
 			service.h
 			status.h
-			worker.h
 	PRIVATE
 		FILE_SET private_headers TYPE HEADERS
 		FILES
 			conn.h
-			coroutine.h
 			message.h
 			request.h
 			response.h
@@ -45,5 +40,5 @@ target_link_libraries(grpcxx
 	PRIVATE
 		libnghttp2::nghttp2
 	PUBLIC
-		libuv::uv
+		asio
 )

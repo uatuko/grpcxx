@@ -1,64 +1,29 @@
 #include "server.h"
 
-#include <unistd.h>
+#include <asio/co_spawn.hpp>
+#include <asio/detached.hpp>
+#include <asio/strand.hpp>
+#include <asio/write.hpp>
 
 #include "conn.h"
-#include "coroutine.h"
 #include "request.h"
 #include "response.h"
 
 namespace grpcxx {
-server::server(std::size_t n) noexcept : _handle(), _loop(), _pool(n), _services() {
-	uv_loop_init(&_loop);
-	uv_tcp_init(&_loop, &_handle);
+server::server(std::size_t n) noexcept : _ctx(n), _services() {}
 
-	_handle.data = this;
-}
-
-detail::coroutine server::accept(uv_stream_t *stream) {
-	// Due to limitations on Windows, libuv doesn't support moving a handler from one loop to
-	// another. On *nix systems this can be done by duplicating the socket.
-	// Ref: https://github.com/libuv/libuv/issues/390
-	uv_tcp_t tmp_handle;
-	uv_tcp_init(&_loop, &tmp_handle);
-
-	if (auto r = uv_accept(stream, reinterpret_cast<uv_stream_t *>(&tmp_handle)); r != 0) {
-		throw std::runtime_error(std::string("Failed to accept connection: ") + uv_strerror(r));
-	}
-
-	uv_os_fd_t tmp_fd;
-	uv_fileno(reinterpret_cast<uv_handle_t *>(&tmp_handle), &tmp_fd);
-
-	auto fd = dup(tmp_fd);
-	uv_close(reinterpret_cast<uv_handle_t *>(&tmp_handle), nullptr);
-
-	auto *loop = co_await _pool.schedule();
-	{ // Executed in a worker thread
-		uv_tcp_t handle;
-		uv_tcp_init(loop, &handle);
-		uv_tcp_open(&handle, fd);
-
-		detail::conn c(&handle);
-		while (c) {
-			for (const auto &req : co_await c) {
-				if (!c) {
-					break;
-				}
-
-				auto resp = process(req);
-				c.write(resp);
+asio::awaitable<void> server::conn(asio::ip::tcp::socket sock) {
+	detail::conn c(std::move(sock));
+	while (c) {
+		for (const auto &req : co_await c.reqs()) {
+			if (!c) {
+				break;
 			}
+
+			auto resp = process(req);
+			co_await c.write(std::move(resp));
 		}
 	}
-}
-
-void server::conn_cb(uv_stream_t *stream, int status) {
-	if (status < 0) {
-		return;
-	}
-
-	auto *s = static_cast<server *>(stream->data);
-	s->accept(stream);
 }
 
 detail::response server::process(const detail::request &req) const noexcept {
@@ -84,14 +49,24 @@ detail::response server::process(const detail::request &req) const noexcept {
 	return resp;
 }
 
-void server::run(const std::string_view &ip, int port) {
-	// TODO: error handling
-	struct sockaddr_in addr;
-	uv_ip4_addr(ip.data(), port, &addr);
+void server::run(const std::string_view ip, int port) {
+	co_spawn(
+		_ctx,
+		[this, &ip, &port]() -> asio::awaitable<void> {
+			auto executor = co_await asio::this_coro::executor;
 
-	uv_tcp_bind(&_handle, reinterpret_cast<const sockaddr *>(&addr), 0);
-	uv_listen(reinterpret_cast<uv_stream_t *>(&_handle), 128, conn_cb);
+			asio::ip::tcp::endpoint endpoint(asio::ip::make_address(ip), port);
+			asio::ip::tcp::acceptor acceptor(executor, endpoint);
 
-	uv_run(&_loop, UV_RUN_DEFAULT);
+			for (;;) {
+				auto sock = co_await acceptor.async_accept(
+					asio::make_strand(executor), asio::use_awaitable);
+
+				co_spawn(sock.get_executor(), conn(std::move(sock)), asio::detached);
+			}
+		}(),
+		asio::detached);
+
+	_ctx.run();
 }
 } // namespace grpcxx
