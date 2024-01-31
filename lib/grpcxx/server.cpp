@@ -188,8 +188,10 @@ server::server(std::size_t n) noexcept : _handle(), _loop(), _pool(n), _services
 }
 
 detail::coroutine server::conn(uv_stream_t *stream) {
+	std::string buf;
+	buf.reserve(1024);
+
 	detail::conn c(stream);
-	std::string  buf;
 	auto         reader  = c.reader();
 	auto        &session = c.session();
 	while (reader) {
@@ -198,26 +200,12 @@ detail::coroutine server::conn(uv_stream_t *stream) {
 			continue;
 		}
 
-		std::vector<detail::response> results;
-		co_await [&c, &bytes, &results, this]() -> task {
-			co_await pool.schedule();
-
-			// Executes in a worker thread
-			for (const auto &req : c.read(bytes)) {
-				results.push_back(process(req));
-			};
-		}();
-
 		for (auto chunk = session.pending(); chunk.size() > 0; chunk = session.pending()) {
 			buf.append(chunk);
 		}
 
-		if (!buf.empty()) {
-			co_await c.write(buf);
-			buf.clear();
-		}
-
-		for (auto &resp : results) {
+		for (auto &req : c.read(bytes)) {
+			auto resp = process(req);
 			session.headers(
 				resp.id(),
 				{
@@ -230,9 +218,6 @@ detail::coroutine server::conn(uv_stream_t *stream) {
 				buf.append(chunk);
 			}
 
-			co_await c.write(buf);
-			buf.clear();
-
 			const auto &status = resp.status();
 			session.trailers(
 				resp.id(),
@@ -244,7 +229,9 @@ detail::coroutine server::conn(uv_stream_t *stream) {
 			for (auto chunk = session.pending(); chunk.size() > 0; chunk = session.pending()) {
 				buf.append(chunk);
 			}
+		}
 
+		if (!buf.empty()) {
 			co_await c.write(buf);
 			buf.clear();
 		}
