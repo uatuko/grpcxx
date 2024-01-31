@@ -164,7 +164,7 @@ private:
 };
 
 std::hash<std::thread::id> hasher;
-threadpool                 pool(10);
+threadpool                 pool(std::thread::hardware_concurrency());
 
 namespace grpcxx {
 server::server(std::size_t n) noexcept : _handle(), _loop(), _pool(n), _services() {
@@ -200,36 +200,41 @@ detail::coroutine server::conn(uv_stream_t *stream) {
 			continue;
 		}
 
-		for (auto chunk = session.pending(); chunk.size() > 0; chunk = session.pending()) {
-			buf.append(chunk);
-		}
-
-		for (auto &req : c.read(bytes)) {
-			auto resp = process(req);
-			session.headers(
-				resp.id(),
-				{
-					{":status", "200"},
-					{"content-type", "application/grpc"},
-				});
-
-			session.data(resp.id(), resp.bytes());
-			for (auto chunk = session.pending(); chunk.size() > 0; chunk = session.pending()) {
-				buf.append(chunk);
-			}
-
-			const auto &status = resp.status();
-			session.trailers(
-				resp.id(),
-				{
-					{"grpc-status", status},
-					{"grpc-status-details-bin", status.details()},
-				});
+		co_await [&]() -> task {
+			co_await pool.schedule();
 
 			for (auto chunk = session.pending(); chunk.size() > 0; chunk = session.pending()) {
 				buf.append(chunk);
 			}
-		}
+
+			for (auto &req : c.read(bytes)) {
+				auto resp = process(req);
+				session.headers(
+					resp.id(),
+					{
+						{":status", "200"},
+						{"content-type", "application/grpc"},
+					});
+
+				session.data(resp.id(), resp.bytes());
+				for (auto chunk = session.pending(); chunk.size() > 0; chunk = session.pending()) {
+					buf.append(chunk);
+				}
+
+				const auto &status = resp.status();
+				session.trailers(
+					resp.id(),
+					{
+						{"grpc-status", status},
+						{"grpc-status-details-bin", status.details()},
+					});
+
+				for (auto chunk = session.pending(); chunk.size() > 0; chunk = session.pending()) {
+					buf.append(chunk);
+				}
+			}
+		}();
+
 
 		if (!buf.empty()) {
 			co_await c.write(buf);
