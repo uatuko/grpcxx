@@ -27,8 +27,8 @@ public:
 
 	h2::session &session() noexcept { return _session; }
 
-	requests_t read(std::string_view bytes);
-	reader     reader() const noexcept;
+	requests_t   read(std::string_view bytes);
+	class reader reader() const noexcept;
 
 	writer write(std::string_view bytes) const noexcept;
 
