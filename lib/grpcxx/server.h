@@ -42,7 +42,7 @@ public:
 private:
 	static void conn_cb(uv_stream_t *stream, int status);
 
-	detail::coroutine accept(uv_stream_t *stream);
+	detail::coroutine conn(uv_stream_t *stream);
 	detail::response  process(const detail::request &req) const noexcept;
 
 	uv_tcp_t  _handle;

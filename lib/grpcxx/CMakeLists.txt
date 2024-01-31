@@ -5,9 +5,11 @@ target_sources(grpcxx
 		context.cpp
 		message.cpp
 		pool.cpp
+		reader.cpp
 		request.cpp
 		server.cpp
 		worker.cpp
+		writer.cpp
 	PUBLIC
 		FILE_SET headers TYPE HEADERS
 		FILES
@@ -25,8 +27,10 @@ target_sources(grpcxx
 			conn.h
 			coroutine.h
 			message.h
+			reader.h
 			request.h
 			response.h
+			writer.h
 )
 
 # h2 sources

@@ -1,60 +1,49 @@
 #pragma once
 
-#include <coroutine>
 #include <forward_list>
+#include <memory>
+#include <string_view>
 #include <unordered_map>
 
 #include <uv.h>
 
 #include "h2/session.h"
 
+#include "reader.h"
 #include "request.h"
 #include "response.h"
+#include "writer.h"
 
 namespace grpcxx {
 namespace detail {
 class conn {
 public:
+	using handle_t   = std::shared_ptr<uv_tcp_t>;
 	using requests_t = std::forward_list<request>;
 	using streams_t  = std::unordered_map<int32_t, request>;
 
 	conn(const conn &) = delete;
-	conn(uv_tcp_t *handle) noexcept;
+	conn(uv_stream_t *stream);
 
-	operator bool() const noexcept { return !_eos; }
+	h2::session &session() noexcept { return _session; }
 
-	bool       await_ready() const noexcept { return _eos || !_reqs.empty(); }
-	void       await_suspend(std::coroutine_handle<> h) noexcept { _h = h; }
-	requests_t await_resume() noexcept;
+	requests_t read(std::string_view bytes);
+	reader     reader() const noexcept;
 
-	void read(std::size_t n);
-	void write(response resp) noexcept;
+	writer write(std::string_view bytes) const noexcept;
 
 private:
-	template <std::size_t N> class buffer_t {
-	public:
-		constexpr char       *data() noexcept { return &_data[0]; }
-		constexpr std::size_t capacity() const noexcept { return N; }
-
-	private:
-		char _data[N];
+	struct deleter {
+		void operator()(void *handle) const noexcept {
+			uv_close(static_cast<uv_handle_t *>(handle), [](uv_handle_t *handle) {
+				delete reinterpret_cast<uv_tcp_t *>(handle);
+			});
+		}
 	};
 
-	static void close_cb(uv_handle_t *handle);
-	static void write_cb(uv_write_t *req, int status);
-
-	void resume() noexcept;
-	void write() noexcept;
-
-	std::coroutine_handle<> _h;
-
-	buffer_t<1024> _buf; // FIXME: make size configurable
-	bool           _eos;
-	requests_t     _reqs;
-	h2::session    _session;
-	streams_t      _streams;
-
-	uv_tcp_t *_handle;
+	handle_t    _handle;
+	h2::session _session;
+	streams_t   _streams;
 };
 } // namespace detail
 } // namespace grpcxx
