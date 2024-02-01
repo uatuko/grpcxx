@@ -6,6 +6,7 @@ target_sources(grpcxx
 		message.cpp
 		reader.cpp
 		request.cpp
+		scheduler.cpp
 		server.cpp
 		writer.cpp
 	PUBLIC
@@ -14,9 +15,11 @@ target_sources(grpcxx
 			context.h
 			fixed_string.h
 			rpc.h
+			scheduler.h
 			server.h
 			service.h
 			status.h
+			task.h
 	PRIVATE
 		FILE_SET private_headers TYPE HEADERS
 		FILES
