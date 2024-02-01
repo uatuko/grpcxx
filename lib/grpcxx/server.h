@@ -45,7 +45,6 @@ private:
 		loop_t() { uv_loop_init(&_loop); }
 
 		operator uv_loop_t *() noexcept { return &_loop; }
-		uv_loop_t *operator&() noexcept { return &_loop; }
 
 		uv_loop_t _loop;
 	};

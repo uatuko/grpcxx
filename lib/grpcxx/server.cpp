@@ -7,7 +7,7 @@
 
 namespace grpcxx {
 server::server(std::size_t n) noexcept : _scheduler(_loop, n) {
-	uv_tcp_init(&_loop, &_handle);
+	uv_tcp_init(_loop, &_handle);
 	_handle.data = this;
 }
 
@@ -109,6 +109,6 @@ void server::run(const std::string_view &ip, int port) {
 			std::string("Failed to listen for connections: ") + uv_strerror(r));
 	}
 
-	uv_run(&_loop, UV_RUN_DEFAULT);
+	uv_run(_loop, UV_RUN_DEFAULT);
 }
 } // namespace grpcxx
