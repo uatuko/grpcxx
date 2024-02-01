@@ -49,9 +49,9 @@ public:
 			try {
 				std::rethrow_exception(std::current_exception());
 			} catch (const std::exception &e) {
-				std::fprintf(stderr, "Exception: %s\n", e.what());
+				std::fprintf(stderr, "[error] %s\n", e.what());
 			} catch (...) {
-				std::fprintf(stderr, "Unknown exception\n");
+				std::fprintf(stderr, "[error] Unknown exception\n");
 			}
 		}
 

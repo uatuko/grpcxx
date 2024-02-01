@@ -12,12 +12,8 @@ server::server(std::size_t n) noexcept : _scheduler(_loop, n) {
 }
 
 detail::coroutine server::conn(uv_stream_t *stream) {
-	std::string buf;
-	buf.reserve(1024);
-
 	detail::conn c(stream);
-	auto         reader  = c.reader();
-	auto        &session = c.session();
+	auto         reader = c.reader();
 	while (reader) {
 		auto bytes = co_await reader;
 		if (bytes.empty()) {
@@ -25,42 +21,13 @@ detail::coroutine server::conn(uv_stream_t *stream) {
 		}
 
 		co_await _scheduler.run([&] {
-			for (auto chunk = session.pending(); chunk.size() > 0; chunk = session.pending()) {
-				buf.append(chunk);
-			}
-
 			for (auto &req : c.read(bytes)) {
 				auto resp = process(req);
-				session.headers(
-					resp.id(),
-					{
-						{":status", "200"},
-						{"content-type", "application/grpc"},
-					});
-
-				session.data(resp.id(), resp.bytes());
-				for (auto chunk = session.pending(); chunk.size() > 0; chunk = session.pending()) {
-					buf.append(chunk);
-				}
-
-				const auto &status = resp.status();
-				session.trailers(
-					resp.id(),
-					{
-						{"grpc-status", status},
-						{"grpc-status-details-bin", status.details()},
-					});
-
-				for (auto chunk = session.pending(); chunk.size() > 0; chunk = session.pending()) {
-					buf.append(chunk);
-				}
+				c.write(std::move(resp));
 			}
 		});
 
-		if (!buf.empty()) {
-			co_await c.write(buf);
-			buf.clear();
-		}
+		co_await c.flush();
 	}
 }
 
