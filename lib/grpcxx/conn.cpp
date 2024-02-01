@@ -1,7 +1,5 @@
 #include "conn.h"
 
-#include <string>
-
 namespace grpcxx {
 namespace detail {
 conn::conn(uv_stream_t *stream) : _handle(new uv_tcp_t{}, deleter{}) {
