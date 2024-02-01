@@ -8,7 +8,6 @@
 #include <uv.h>
 
 #include "context.h"
-#include "pool.h"
 #include "status.h"
 
 namespace grpcxx {
@@ -48,7 +47,6 @@ private:
 	uv_tcp_t  _handle;
 	uv_loop_t _loop;
 
-	detail::pool _pool;
 	services_t   _services;
 };
 } // namespace grpcxx
