@@ -128,7 +128,7 @@ Constructs a new server instance.
 
 1. Constructs a server with `n` worker threads (in _addition_ to the I/O thread). If `n` is `0`, all requests will be processed in the I/O thread.
 
-> 💡 Number of workers in the pool can impact throughput and should be tuned for your use-case (i.e. more workers will not always increase throughput).
+> 💡 Number of worker threads can impact throughput and should be tuned for your use-case (i.e. more workers will not always increase throughput).
 
 #### add
 
