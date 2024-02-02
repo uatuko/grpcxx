@@ -126,9 +126,9 @@ A gRPC server capable of serving multiple clients.
 
 Constructs a new server instance.
 
-1. Constructs a server with `n` workers in the worker pool. If `n` is `0`, the worker pool will have one worker.
+1. Constructs a server with `n` worker threads (in _addition_ to the I/O thread). If `n` is `0`, all requests will be processed in the I/O thread.
 
-> 💡 Number of workers in the pool can impact throughput (i.e. more workers will not always increase throughput).
+> 💡 Number of workers in the pool can impact throughput and should be tuned for your use-case (i.e. more workers will not always increase throughput).
 
 #### add
 
