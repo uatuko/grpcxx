@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.0 - 2nd February, 2024
+
+* Run only one libuv event loop for I/O and move processing to worker threads (#24)
+
 ## 0.1.4 - 12th January, 2024
 
 * Fix to ensure idle connections don't block worker threads (#20).
