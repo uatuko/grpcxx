@@ -20,9 +20,9 @@ struct coroutine {
 			try {
 				std::rethrow_exception(std::current_exception());
 			} catch (const std::exception &e) {
-				std::fprintf(stderr, "Exception: %s\n", e.what());
+				std::fprintf(stderr, "[warn] %s\n", e.what());
 			} catch (...) {
-				std::fprintf(stderr, "Unknown exception\n");
+				std::fprintf(stderr, "[warn] Unknown exception\n");
 			}
 		}
 	};

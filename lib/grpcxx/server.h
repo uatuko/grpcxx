@@ -3,12 +3,13 @@
 #include <functional>
 #include <string>
 #include <string_view>
+#include <thread>
 #include <unordered_map>
 
 #include <uv.h>
 
 #include "context.h"
-#include "pool.h"
+#include "scheduler.h"
 #include "status.h"
 
 namespace grpcxx {
@@ -40,15 +41,24 @@ public:
 	void run(const std::string_view &ip, int port);
 
 private:
+	struct loop_t {
+		loop_t() { uv_loop_init(&_loop); }
+
+		operator uv_loop_t *() noexcept { return &_loop; }
+
+		uv_loop_t _loop;
+	};
+
 	static void conn_cb(uv_stream_t *stream, int status);
 
-	detail::coroutine accept(uv_stream_t *stream);
+	detail::coroutine conn(uv_stream_t *stream);
 	detail::response  process(const detail::request &req) const noexcept;
 
-	uv_tcp_t  _handle;
-	uv_loop_t _loop;
+	uv_tcp_t _handle;
+	loop_t   _loop;
 
-	detail::pool _pool;
-	services_t   _services;
+	services_t _services;
+
+	detail::scheduler _scheduler;
 };
 } // namespace grpcxx
