@@ -62,7 +62,12 @@ int main() {
 	ServiceImpl impl;
 	Service     service(impl);
 
+#ifndef GRPCXX_USE_ASIO
 	grpcxx::server server;
+#else
+	asio::io_context ctx;
+	grpcxx::server   server(ctx);
+#endif
 	server.add(service);
 
 	std::printf("Listening on [127.0.0.1:7000] ...\n");

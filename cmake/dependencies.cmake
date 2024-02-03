@@ -1,16 +1,57 @@
 include(FetchContent)
 
-# libuv
-FetchContent_Declare(libuv
-	URL      https://github.com/libuv/libuv/archive/refs/tags/v1.46.0.tar.gz
-	URL_HASH SHA256=7aa66be3413ae10605e1f5c9ae934504ffe317ef68ea16fdaa83e23905c681bd
-)
+if (NOT GRPCXX_USE_ASIO)
+	# libuv
+	FetchContent_Declare(libuv
+		URL      https://github.com/libuv/libuv/archive/refs/tags/v1.46.0.tar.gz
+		URL_HASH SHA256=7aa66be3413ae10605e1f5c9ae934504ffe317ef68ea16fdaa83e23905c681bd
+	)
 
-set(LIBUV_BUILD_SHARED OFF CACHE BOOL "Build libuv shared lib")
+	set(LIBUV_BUILD_SHARED OFF CACHE BOOL "Build libuv shared lib")
+	FetchContent_MakeAvailable(libuv)
+	add_library(libuv::uv ALIAS uv_a)
+else ()
+	# asio
+	find_path(Asio_INCLUDE_DIR NAMES asio.hpp)
+	if (Asio_INCLUDE_DIR)
+		file(READ "${Asio_INCLUDE_DIR}/asio/version.hpp" tmp_version)
+		string(REGEX MATCH "#define ASIO_VERSION ([0-9]+)" REGEX_VERSION ${tmp_version})
 
-FetchContent_MakeAvailable(libuv)
+		set(tmp_asio_version ${CMAKE_MATCH_1})
+		math(EXPR Asio_VERSION_MAJOR "${tmp_asio_version} / 100000")
+		math(EXPR Asio_VERSION_MINOR "${tmp_asio_version} / 100 % 1000")
+		math(EXPR Asio_VERSION_PATCH "${tmp_asio_version} % 100")
+		set(Asio_VERSION "${Asio_VERSION_MAJOR}.${Asio_VERSION_MINOR}.${Asio_VERSION_PATCH}")
 
-add_library(libuv::uv ALIAS uv_a)
+		unset(tmp_version)
+		unset(tmp_asio_version)
+
+		if (${Asio_VERSION} VERSION_LESS 1.28)
+			unset(Asio_INCLUDE_DIR)
+			unset(Asio_VERSION)
+			unset(Asio_VERSION_MAJOR)
+			unset(Asio_VERSION_MINOR)
+			unset(Asio_VERSION_PATCH)
+		else()
+			set(Asio_FOUND ON)
+			message(STATUS "Found Asio ${Asio_VERSION} at ${Asio_INCLUDE_DIR}")
+		endif()
+	endif()
+
+	if (NOT Asio_FOUND)
+		FetchContent_Declare(asio
+			URL      https://github.com/chriskohlhoff/asio/archive/refs/tags/asio-1-29-0.tar.gz
+			URL_HASH SHA256=44305859b4e6664dbbf853c1ef8ca0259d694f033753ae309fcb2534ca20f721
+		)
+		FetchContent_MakeAvailable(asio)
+
+		set(Asio_INCLUDE_DIR "$<BUILD_INTERFACE:${asio_SOURCE_DIR}/asio/include>")
+	endif()
+
+	add_library(asio INTERFACE)
+	target_include_directories(asio INTERFACE ${Asio_INCLUDE_DIR})
+	target_compile_definitions(asio INTERFACE ASIO_STANDALONE ASIO_NO_DEPRECATED)
+endif()
 
 # nghttp2
 FetchContent_Declare(nghttp2
