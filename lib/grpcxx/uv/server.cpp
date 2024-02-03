@@ -5,7 +5,6 @@
 
 namespace grpcxx {
 namespace uv {
-namespace detail {
 server::server(std::size_t n) noexcept : _scheduler(_loop, n) {
 	uv_tcp_init(_loop, &_handle);
 	_handle.data = this;
@@ -55,6 +54,5 @@ void server::run(std::string_view ip, int port) {
 
 	uv_run(_loop, UV_RUN_DEFAULT);
 }
-} // namespace detail
 } // namespace uv
 } // namespace grpcxx

@@ -8,7 +8,7 @@
 
 namespace grpcxx {
 #ifndef GRPCXX_USE_ASIO
-using server = uv::detail::server;
+using server = uv::server;
 #else
 using server = asio::server;
 #endif

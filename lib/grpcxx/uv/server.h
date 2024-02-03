@@ -10,10 +10,10 @@
 
 namespace grpcxx {
 namespace uv {
-namespace detail {
-
 // Forward declarations
+namespace detail {
 struct coroutine;
+}
 
 class server : public ::grpcxx::detail::server_base {
 public:
@@ -33,13 +33,12 @@ private:
 
 	static void conn_cb(uv_stream_t *stream, int status);
 
-	coroutine conn(uv_stream_t *stream);
+	detail::coroutine conn(uv_stream_t *stream);
 
 	uv_tcp_t _handle;
 	loop_t   _loop;
 
-	scheduler _scheduler;
+	detail::scheduler _scheduler;
 };
-} // namespace detail
 } // namespace uv
 } // namespace grpcxx
