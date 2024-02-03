@@ -10,7 +10,7 @@ if (NOT GRPCXX_USE_ASIO)
 	set(LIBUV_BUILD_SHARED OFF CACHE BOOL "Build libuv shared lib")
 	FetchContent_MakeAvailable(libuv)
 	add_library(libuv::uv ALIAS uv_a)
-else ()
+else()
 	# asio
 	find_path(Asio_INCLUDE_DIR NAMES asio.hpp)
 	if (Asio_INCLUDE_DIR)
