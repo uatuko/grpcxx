@@ -39,10 +39,10 @@ private:
 	requests_t              read(std::size_t n);
 	::asio::awaitable<void> write();
 
-	buffer_t<1024> _buf; // FIXME: make size configurable
-	bool           _eos = false;
-	h2::session    _session;
-	streams_t      _streams;
+	buffer_t<1024>      _buf; // FIXME: make size configurable
+	bool                _eos = false;
+	h2::detail::session _session;
+	streams_t           _streams;
 
 	::asio::ip::tcp::socket _sock;
 };

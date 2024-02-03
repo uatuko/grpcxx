@@ -16,7 +16,7 @@ conn::requests_t conn::read(std::size_t n) {
 			continue;
 		}
 
-		if (ev.type == h2::event::type_t::stream_close) {
+		if (ev.type == h2::detail::event::type_t::stream_close) {
 			_streams.erase(ev.stream_id);
 			continue;
 		}
@@ -25,18 +25,18 @@ conn::requests_t conn::read(std::size_t n) {
 		auto               &req = it->second;
 
 		switch (ev.type) {
-		case h2::event::type_t::stream_data: {
+		case h2::detail::event::type_t::stream_data: {
 			req.read(ev.data);
 			break;
 		}
 
-		case h2::event::type_t::stream_end: {
+		case h2::detail::event::type_t::stream_end: {
 			reqs.push_front(std::move(req));
 			_streams.erase(ev.stream_id);
 			break;
 		}
 
-		case h2::event::type_t::stream_header: {
+		case h2::detail::event::type_t::stream_header: {
 			req.header(std::move(ev.header->name), std::move(ev.header->value));
 			break;
 		}

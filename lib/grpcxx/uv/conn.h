@@ -47,10 +47,10 @@ private:
 	void   buffer() noexcept;
 	writer write(std::string_view bytes) const noexcept;
 
-	buffer_t    _buffer;
-	handle_t    _handle;
-	h2::session _session;
-	streams_t   _streams;
+	buffer_t            _buffer;
+	handle_t            _handle;
+	h2::detail::session _session;
+	streams_t           _streams;
 };
 } // namespace detail
 } // namespace uv
