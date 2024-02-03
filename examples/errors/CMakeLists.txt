@@ -9,10 +9,3 @@ target_link_libraries(${PROJECT_NAME}-examples_errors
 		errors-proto
 		libgrpcxx::grpcxx
 )
-
-if (GRPCXX_USE_ASIO)
-	target_compile_definitions(${PROJECT_NAME}-examples_errors
-		PUBLIC
-			GRPCXX_USE_ASIO
-	)
-endif()
