@@ -13,6 +13,7 @@
 #include "task.h"
 
 namespace grpcxx {
+namespace uv {
 namespace detail {
 class scheduler {
 public:
@@ -60,4 +61,5 @@ private:
 	std::mutex _joiners_mutex;
 };
 } // namespace detail
+} // namespace uv
 } // namespace grpcxx

@@ -1,6 +1,7 @@
 #include "conn.h"
 
 namespace grpcxx {
+namespace uv {
 namespace detail {
 conn::conn(uv_stream_t *stream) : _handle(new uv_tcp_t{}, deleter{}) {
 	_buffer.reserve(1024); // FIXME: make size configurable
@@ -72,7 +73,7 @@ reader conn::reader() const noexcept {
 	return {std::reinterpret_pointer_cast<uv_stream_t>(_handle)};
 }
 
-void conn::write(response resp) noexcept {
+void conn::write(::grpcxx::detail::response resp) noexcept {
 	_session.headers(
 		resp.id(),
 		{
@@ -98,4 +99,5 @@ writer conn::write(std::string_view bytes) const noexcept {
 	return {std::reinterpret_pointer_cast<uv_stream_t>(_handle), bytes};
 }
 } // namespace detail
+} // namespace uv
 } // namespace grpcxx

@@ -6,6 +6,7 @@
 #include <functional>
 
 namespace grpcxx {
+namespace uv {
 namespace detail {
 class task {
 public:
@@ -86,4 +87,5 @@ private:
 	std::coroutine_handle<promise_type> _h;
 };
 } // namespace detail
+} // namespace uv
 } // namespace grpcxx
