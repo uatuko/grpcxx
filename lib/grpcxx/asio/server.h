@@ -7,7 +7,7 @@
 
 namespace grpcxx {
 namespace asio {
-class server : public ::grpcxx::detail::server_base {
+class server : public ::grpcxx::server_base {
 public:
 	server(const server &) = delete;
 	server()               = default;

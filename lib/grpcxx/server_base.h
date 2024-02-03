@@ -9,11 +9,12 @@
 #include "status.h"
 
 namespace grpcxx {
-namespace detail {
 
 // Forward declarations
+namespace detail {
 class request;
 class response;
+} // namespace detail
 
 class server_base {
 public:
@@ -28,10 +29,9 @@ public:
 	}
 
 protected:
-	response process(const request &req) const noexcept;
+	detail::response process(const detail::request &req) const noexcept;
 
 private:
 	services_t _services;
 };
-} // namespace detail
 } // namespace grpcxx

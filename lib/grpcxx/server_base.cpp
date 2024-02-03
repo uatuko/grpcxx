@@ -4,8 +4,7 @@
 #include "response.h"
 
 namespace grpcxx {
-namespace detail {
-response server_base::process(const request &req) const noexcept {
+detail::response server_base::process(const detail::request &req) const noexcept {
 	if (!req) {
 		return {req.id(), status::code_t::invalid_argument};
 	}
@@ -27,5 +26,4 @@ response server_base::process(const request &req) const noexcept {
 
 	return resp;
 }
-} // namespace detail
 } // namespace grpcxx

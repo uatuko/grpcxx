@@ -15,7 +15,7 @@ namespace detail {
 struct coroutine;
 }
 
-class server : public ::grpcxx::detail::server_base {
+class server : public ::grpcxx::server_base {
 public:
 	server(const server &) = delete;
 	server(std::size_t n = std::thread::hardware_concurrency()) noexcept;
