@@ -120,9 +120,7 @@ jobs:
     steps:
       - name: Install dependencies
         run: |
-          vcpkg install \
-            protobuf \
-            ${{ matrix.dependencies }}
+          vcpkg install protobuf ${{ matrix.dependencies }}
 
       - uses: actions/checkout@v4
       - uses: actions/cache@v4
@@ -132,9 +130,7 @@ jobs:
 
       - name: Configure CMake
         run: |
-          cmake -B .build \
-            -DCMAKE_BUILD_TYPE=Release \
-            ${{ matrix.cmake_args }}
+          cmake -B .build -DCMAKE_BUILD_TYPE=Release ${{ matrix.cmake_args }}
       - name: Build
         run: |
           cmake --build .build --config Release
