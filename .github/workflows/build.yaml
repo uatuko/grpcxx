@@ -11,7 +11,7 @@ jobs:
   linux:
     runs-on: ubuntu-latest
     concurrency:
-      group: ${{ github.workflow_ref }}-${{ github.job }}_${{ matrix.container }}-${{ matrix.compiler }}
+      group: ${{ github.workflow_ref }}-${{ github.job }}_${{ matrix.container }}-${{ matrix.compiler }}-${{ matrix.variant }}
     container: ${{ matrix.container }}
 
     strategy:
@@ -22,11 +22,16 @@ jobs:
           - clang++
         container:
           - ubuntu:23.04
+        variant:
+          - libuv
+          - asio
         include:
           - compiler: g++
             dependencies: g++
           - compiler: clang++
             dependencies: clang
+          - variant: asio
+            cmake_args: -DGRPCXX_USE_ASIO=ON
 
     steps:
       - name: Install dependencies
@@ -41,13 +46,14 @@ jobs:
       - uses: actions/cache@v3
         with:
           path: .build
-          key: ${{ runner.arch }}_${{ matrix.container }}-${{ matrix.compiler }}-${{ hashFiles('cmake/dependencies.cmake') }}
+          key: ${{ runner.arch }}_${{ matrix.container }}-${{ matrix.compiler }}-${{ matrix.variant }}-${{ hashFiles('cmake/dependencies.cmake') }}
 
       - name: Configure CMake
         run: |
           cmake -B .build -G Ninja \
             -DCMAKE_CXX_COMPILER=${{ matrix.compiler }} \
-            -DCMAKE_BUILD_TYPE=Release
+            -DCMAKE_BUILD_TYPE=Release \
+            ${{ matrix.cmake_args }}
       - name: Build
         run: |
           cmake --build .build --config Release
