@@ -1,13 +1,19 @@
 #include "conn.h"
 
+#ifdef BOOST_ASIO_STANDALONE
+#include <boost/asio/as_tuple.hpp>
+#include <boost/asio/use_awaitable.hpp>
+#include <boost/asio/write.hpp>
+#else
 #include <asio/as_tuple.hpp>
 #include <asio/use_awaitable.hpp>
 #include <asio/write.hpp>
+#endif
 
 namespace grpcxx {
 namespace asio {
 namespace detail {
-conn::conn(::asio::ip::tcp::socket &&sock) noexcept : _sock(std::move(sock)) {}
+conn::conn(ASIO_NS::ip::tcp::socket &&sock) noexcept : _sock(std::move(sock)) {}
 
 conn::requests_t conn::read(std::size_t n) {
 	requests_t reqs;
@@ -49,9 +55,9 @@ conn::requests_t conn::read(std::size_t n) {
 	return reqs;
 }
 
-::asio::awaitable<conn::requests_t> conn::reqs() noexcept {
+ASIO_NS::awaitable<conn::requests_t> conn::reqs() noexcept {
 	auto [ec, n] = co_await _sock.async_read_some(
-		::asio::buffer(_buf.data(), _buf.capacity()), ::asio::as_tuple(::asio::use_awaitable));
+		ASIO_NS::buffer(_buf.data(), _buf.capacity()), ASIO_NS::as_tuple(ASIO_NS::use_awaitable));
 
 	if (ec) {
 		// TODO: handle errors
@@ -72,13 +78,13 @@ conn::requests_t conn::read(std::size_t n) {
 	co_return reqs;
 }
 
-::asio::awaitable<void> conn::write() {
+ASIO_NS::awaitable<void> conn::write() {
 	for (auto chunk = _session.pending(); chunk.size() > 0; chunk = _session.pending()) {
-		co_await ::asio::async_write(_sock, ::asio::buffer(chunk), ::asio::use_awaitable);
+		co_await ASIO_NS::async_write(_sock, ASIO_NS::buffer(chunk), ASIO_NS::use_awaitable);
 	}
 }
 
-::asio::awaitable<void> conn::write(::grpcxx::detail::response resp) noexcept {
+ASIO_NS::awaitable<void> conn::write(::grpcxx::detail::response resp) noexcept {
 	_session.headers(
 		resp.id(),
 		{

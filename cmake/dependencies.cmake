@@ -12,45 +12,64 @@ if (NOT GRPCXX_USE_ASIO)
 	add_library(libuv::uv ALIAS uv_a)
 else()
 	# asio
-	find_path(Asio_INCLUDE_DIR NAMES asio.hpp)
-	if (Asio_INCLUDE_DIR)
-		file(READ "${Asio_INCLUDE_DIR}/asio/version.hpp" tmp_version)
-		string(REGEX MATCH "#define ASIO_VERSION ([0-9]+)" REGEX_VERSION ${tmp_version})
-
-		set(tmp_asio_version ${CMAKE_MATCH_1})
-		math(EXPR Asio_VERSION_MAJOR "${tmp_asio_version} / 100000")
-		math(EXPR Asio_VERSION_MINOR "${tmp_asio_version} / 100 % 1000")
-		math(EXPR Asio_VERSION_PATCH "${tmp_asio_version} % 100")
-		set(Asio_VERSION "${Asio_VERSION_MAJOR}.${Asio_VERSION_MINOR}.${Asio_VERSION_PATCH}")
-
-		unset(tmp_version)
-		unset(tmp_asio_version)
-
-		if (${Asio_VERSION} VERSION_LESS 1.28)
-			unset(Asio_INCLUDE_DIR)
-			unset(Asio_VERSION)
-			unset(Asio_VERSION_MAJOR)
-			unset(Asio_VERSION_MINOR)
-			unset(Asio_VERSION_PATCH)
-		else()
-			set(Asio_FOUND ON)
-			message(STATUS "Found Asio ${Asio_VERSION} at ${Asio_INCLUDE_DIR}")
-		endif()
-	endif()
-
-	if (NOT Asio_FOUND)
-		FetchContent_Declare(asio
-			URL      https://github.com/chriskohlhoff/asio/archive/refs/tags/asio-1-29-0.tar.gz
-			URL_HASH SHA256=44305859b4e6664dbbf853c1ef8ca0259d694f033753ae309fcb2534ca20f721
-		)
-		FetchContent_MakeAvailable(asio)
-
-		set(Asio_INCLUDE_DIR "$<BUILD_INTERFACE:${asio_SOURCE_DIR}/asio/include>")
-	endif()
-
 	add_library(asio INTERFACE)
-	target_include_directories(asio INTERFACE ${Asio_INCLUDE_DIR})
-	target_compile_definitions(asio INTERFACE ASIO_STANDALONE ASIO_NO_DEPRECATED)
+
+	find_package(Boost 1.81)
+	if (Boost_FOUND)
+		message(STATUS "Found Boost ${Boost_VERSION} at ${Boost_INCLUDE_DIR}")
+
+		target_include_directories(asio INTERFACE ${Boost_INCLUDE_DIR})
+		target_compile_definitions(asio
+			INTERFACE
+				ASIO_NS=::boost::asio
+				BOOST_ASIO_STANDALONE
+				BOOST_ASIO_NO_DEPRECATED
+		)
+	else()
+		find_path(Asio_INCLUDE_DIR NAMES asio.hpp)
+		if (Asio_INCLUDE_DIR)
+			file(READ "${Asio_INCLUDE_DIR}/asio/version.hpp" tmp_version)
+			string(REGEX MATCH "#define ASIO_VERSION ([0-9]+)" REGEX_VERSION ${tmp_version})
+
+			set(tmp_asio_version ${CMAKE_MATCH_1})
+			math(EXPR Asio_VERSION_MAJOR "${tmp_asio_version} / 100000")
+			math(EXPR Asio_VERSION_MINOR "${tmp_asio_version} / 100 % 1000")
+			math(EXPR Asio_VERSION_PATCH "${tmp_asio_version} % 100")
+			set(Asio_VERSION "${Asio_VERSION_MAJOR}.${Asio_VERSION_MINOR}.${Asio_VERSION_PATCH}")
+
+			unset(tmp_version)
+			unset(tmp_asio_version)
+
+			if (${Asio_VERSION} VERSION_LESS 1.28)
+				unset(Asio_INCLUDE_DIR)
+				unset(Asio_VERSION)
+				unset(Asio_VERSION_MAJOR)
+				unset(Asio_VERSION_MINOR)
+				unset(Asio_VERSION_PATCH)
+			else()
+				set(Asio_FOUND ON)
+				message(STATUS "Found Asio ${Asio_VERSION} at ${Asio_INCLUDE_DIR}")
+			endif()
+		endif()
+
+		if (NOT Asio_FOUND)
+			FetchContent_Declare(asio
+				URL      https://github.com/chriskohlhoff/asio/archive/refs/tags/asio-1-29-0.tar.gz
+				URL_HASH SHA256=44305859b4e6664dbbf853c1ef8ca0259d694f033753ae309fcb2534ca20f721
+			)
+			FetchContent_MakeAvailable(asio)
+
+			set(Asio_INCLUDE_DIR "$<BUILD_INTERFACE:${asio_SOURCE_DIR}/asio/include>")
+		endif()
+
+		target_include_directories(asio INTERFACE ${Asio_INCLUDE_DIR})
+		target_compile_definitions(asio
+			INTERFACE
+				ASIO_NS=::asio
+				ASIO_STANDALONE
+				ASIO_NO_DEPRECATED
+		)
+	endif()
 endif()
 
 # nghttp2
