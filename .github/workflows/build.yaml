@@ -42,8 +42,8 @@ jobs:
             cmake ninja-build \
             libprotobuf-dev libprotoc-dev protobuf-compiler
 
-      - uses: actions/checkout@v3
-      - uses: actions/cache@v3
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
         with:
           path: .build
           key: ${{ runner.arch }}_${{ matrix.container }}-${{ matrix.compiler }}-${{ matrix.variant }}-${{ hashFiles('cmake/dependencies.cmake') }}
@@ -62,7 +62,7 @@ jobs:
   macos:
     runs-on: macos-13 # [Nov. 2023] `macos-latest` is pointing to `macos-12` which doesn't support coroutines.
     concurrency:
-      group: ${{ github.workflow_ref }}-${{ github.job }}_${{ matrix.compiler }}
+      group: ${{ github.workflow_ref }}-${{ github.job }}_${{ matrix.compiler }}-${{ matrix.variant }}
     strategy:
       fail-fast: false
       matrix:
@@ -86,8 +86,8 @@ jobs:
             ${{ matrix.dependencies }}
           brew link protobuf@3
 
-      - uses: actions/checkout@v3
-      - uses: actions/cache@v3
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
         with:
           path: .build
           key: ${{ runner.arch }}_${{ runner.os }}-${{ matrix.compiler }}-${{ matrix.variant }}-${{ hashFiles('cmake/dependencies.cmake') }}
