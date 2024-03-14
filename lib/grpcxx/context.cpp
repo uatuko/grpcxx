@@ -4,9 +4,7 @@
 
 namespace grpcxx {
 context::context(const detail::request &req) noexcept {
-	for (const auto &[key, value] : req.metadata()) {
-		_meta.emplace(key, value);
-	}
+	meta(req);
 }
 
 context::meta_t::mapped_type context::meta(meta_t::key_type key) const noexcept {
@@ -16,5 +14,11 @@ context::meta_t::mapped_type context::meta(meta_t::key_type key) const noexcept 
 	}
 
 	return it->second;
+}
+
+void context::meta(const detail::request &req) noexcept {
+	for (const auto &[key, value] : req.metadata()) {
+		_meta.emplace(key, value);
+	}
 }
 } // namespace grpcxx
