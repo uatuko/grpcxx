@@ -20,7 +20,6 @@ public:
 	context(const detail::request &req) noexcept;
 
 	meta_t::mapped_type meta(meta_t::key_type key) const noexcept;
-	void                meta(const detail::request &req) noexcept;
 
 private:
 	meta_t _meta;
