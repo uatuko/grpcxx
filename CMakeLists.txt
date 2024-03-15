@@ -8,6 +8,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 
+option(GRPCXX_USE_ASIO "Use asio instead of libuv for I/O and event loop" OFF)
+
 include(CMakeDependentOption)
 cmake_dependent_option(GRPCXX_BUILD_EXAMPLES
 	"Build examples when this is the root project" ON
@@ -16,7 +18,7 @@ cmake_dependent_option(GRPCXX_BUILD_EXAMPLES
 
 cmake_dependent_option(GRPCXX_BUILD_EXPERIMENTS
 	"Build experiments when this is the root project" ON
-	"CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR" OFF
+	"NOT GRPCXX_USE_ASIO; CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR" OFF
 )
 
 include(cmake/dependencies.cmake)

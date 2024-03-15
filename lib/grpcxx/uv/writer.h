@@ -7,6 +7,7 @@
 #include <uv.h>
 
 namespace grpcxx {
+namespace uv {
 namespace detail {
 class writer {
 public:
@@ -28,4 +29,5 @@ private:
 	uv_write_t              _req;
 };
 } // namespace detail
+} // namespace uv
 } // namespace grpcxx

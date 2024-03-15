@@ -9,6 +9,7 @@
 
 namespace grpcxx {
 namespace h2 {
+namespace detail {
 class session {
 public:
 	using events_t = std::vector<event>;
@@ -18,9 +19,9 @@ public:
 
 	~session();
 
-	void headers(int32_t stream_id, h2::headers hdrs) const;
+	void headers(int32_t stream_id, detail::headers hdrs) const;
 	void data(int32_t stream_id, std::string &&data);
-	void trailers(int32_t stream_id, h2::headers hdrs) const;
+	void trailers(int32_t stream_id, detail::headers hdrs) const;
 
 	events_t         read(std::string_view bytes);
 	std::string_view pending();
@@ -49,5 +50,6 @@ private:
 	events_t         _events;
 	nghttp2_session *_session;
 };
+} // namespace detail
 } // namespace h2
 } // namespace grpcxx

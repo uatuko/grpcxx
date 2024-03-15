@@ -1,6 +1,7 @@
 #include "scheduler.h"
 
 namespace grpcxx {
+namespace uv {
 namespace detail {
 scheduler::scheduler(uv_loop_t *loop, std::size_t n) {
 	if (n == 0) {
@@ -95,4 +96,5 @@ task scheduler::wrap(fn_t fn) {
 	fn();
 }
 } // namespace detail
+} // namespace uv
 } // namespace grpcxx

@@ -1,6 +1,7 @@
 #include "conn.h"
 
 namespace grpcxx {
+namespace uv {
 namespace detail {
 conn::conn(uv_stream_t *stream) : _handle(new uv_tcp_t{}, deleter{}) {
 	_buffer.reserve(1024); // FIXME: make size configurable
@@ -33,7 +34,7 @@ conn::requests_t conn::read(std::string_view bytes) {
 			continue;
 		}
 
-		if (ev.type == h2::event::type_t::stream_close) {
+		if (ev.type == h2::detail::event::type_t::stream_close) {
 			_streams.erase(ev.stream_id);
 			continue;
 		}
@@ -42,18 +43,18 @@ conn::requests_t conn::read(std::string_view bytes) {
 		auto               &req = it->second;
 
 		switch (ev.type) {
-		case h2::event::type_t::stream_data: {
+		case h2::detail::event::type_t::stream_data: {
 			req.read(ev.data);
 			break;
 		}
 
-		case h2::event::type_t::stream_end: {
+		case h2::detail::event::type_t::stream_end: {
 			reqs.push_front(std::move(req));
 			_streams.erase(ev.stream_id);
 			break;
 		}
 
-		case h2::event::type_t::stream_header: {
+		case h2::detail::event::type_t::stream_header: {
 			req.header(std::move(ev.header->name), std::move(ev.header->value));
 			break;
 		}
@@ -72,7 +73,7 @@ reader conn::reader() const noexcept {
 	return {std::reinterpret_pointer_cast<uv_stream_t>(_handle)};
 }
 
-void conn::write(response resp) noexcept {
+void conn::write(::grpcxx::detail::response resp) noexcept {
 	_session.headers(
 		resp.id(),
 		{
@@ -98,4 +99,5 @@ writer conn::write(std::string_view bytes) const noexcept {
 	return {std::reinterpret_pointer_cast<uv_stream_t>(_handle), bytes};
 }
 } // namespace detail
+} // namespace uv
 } // namespace grpcxx

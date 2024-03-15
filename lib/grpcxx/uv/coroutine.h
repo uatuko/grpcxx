@@ -5,6 +5,7 @@
 #include <exception>
 
 namespace grpcxx {
+namespace uv {
 namespace detail {
 struct coroutine {
 	struct promise_type {
@@ -28,4 +29,5 @@ struct coroutine {
 	};
 };
 } // namespace detail
+} // namespace uv
 } // namespace grpcxx

@@ -3,6 +3,7 @@
 #include <string>
 
 namespace grpcxx {
+namespace uv {
 namespace detail {
 reader::reader(stream_t stream) : _eos(false), _nread(0), _stream(stream) {
 	_stream->data = this;
@@ -73,4 +74,5 @@ void reader::resume() const noexcept {
 	}
 }
 } // namespace detail
+} // namespace uv
 } // namespace grpcxx

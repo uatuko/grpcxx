@@ -3,6 +3,7 @@
 #include <string>
 
 namespace grpcxx {
+namespace uv {
 namespace detail {
 writer::writer(std::shared_ptr<uv_stream_t> handle, std::string_view bytes) :
 	_done(false), _e(nullptr), _h(nullptr), _req() {
@@ -47,4 +48,5 @@ void writer::write_cb(uv_write_t *req, int status) {
 	w->resume();
 }
 } // namespace detail
+} // namespace uv
 } // namespace grpcxx

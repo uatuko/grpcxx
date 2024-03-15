@@ -7,6 +7,7 @@
 #include <uv.h>
 
 namespace grpcxx {
+namespace uv {
 namespace detail {
 class reader {
 public:
@@ -46,4 +47,5 @@ private:
 	stream_t                _stream;
 };
 } // namespace detail
+} // namespace uv
 } // namespace grpcxx
