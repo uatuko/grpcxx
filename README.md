@@ -2,6 +2,7 @@
 
 [![license](https://img.shields.io/badge/license-MIT-green)](https://raw.githubusercontent.com/uatuko/grpcxx/main/LICENSE)
 [![build](https://github.com/uatuko/grpcxx/actions/workflows/build.yaml/badge.svg?branch=main)](https://github.com/uatuko/grpcxx/actions/workflows/build.yaml)
+[![discussions](https://img.shields.io/github/discussions/uatuko/grpcxx)](https://github.com/uatuko/grpcxx/discussions)
 [![release](https://img.shields.io/github/v/release/uatuko/grpcxx)](https://github.com/uatuko/grpcxx/releases)
 
 🚀 Blazing fast gRPC C++ Server implemented using modern standards (C++20).
