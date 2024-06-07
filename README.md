@@ -8,7 +8,7 @@
 
 ## Features
 
-* Fast - More than 2x faster compared to the official implementation(s).
+* Fast - 3x faster compared to the official implementation(s).
 * Simple - Overall smaller codebase and 95% less generated code compared to the official implementation.
 * Flexible - The application code is given greater implementation choice by using C++ concepts instead of being restricted to one choice.
 
@@ -16,17 +16,20 @@
 ## Benchmarks
 
 > [!NOTE]
-> You can find more detailed benchmark results in https://github.com/uatuko/grpcxx/issues/25 and https://github.com/uatuko/grpcxx/issues/21#issuecomment-1890901856.
+> You can find more detailed benchmark results in https://github.com/uatuko/grpcxx/issues/25,
+> https://github.com/uatuko/grpcxx/issues/21#issuecomment-1890901856 and https://github.com/uatuko/grpcxx/pull/26.
 
-|                                      | 1a  | 1b   | 2a   | 2b   | 3a   | 3b   |
-| ------------------------------------ | --- | ---- | ---- | ---- | ---- | ---- |
-| gRPC v1.48.4 (callback)              | 25k | 87k  | 76k  | **152k** | 96k  | 142k |
-| grpc-go v1.56.2                      | 27k | 103k | 94k  | 191k | 90k  | **308k** |
-| Rust (tonic v0.10.2)                 | 29k | 66k  | 95k  | 176k | 68k  | **212k** |
-| grpcxx v0.2.0 (single-threaded)      | 42k | 193k | 120k | 449k | 160k | **452k** |
-| grpcxx v0.2.0 (2 workers)            | 33k | 166k | 120k | **431k** | 91k  | 425k |
-| grpcxx v0.2.0 (hardware concurrency) | 34k | 164k | 118k | **450k** | 101k | 408k |
-
+|                                           | 1a  | 1b   | 2a   | 2b   | 3a   | 3b   |
+| ----------------------------------------- | --- | ---- | ---- | ---- | ---- | ---- |
+| gRPC v1.48.4 (callback)                   | 25k | 87k  | 76k  | **152k** | 96k  | 142k |
+| grpc-go v1.56.2                           | 27k | 103k | 94k  | 191k | 90k  | **308k** |
+| Rust (tonic v0.10.2)                      | 29k | 66k  | 95k  | 176k | 68k  | **212k** |
+| (`libuv`) grpcxx v0.2.0 (single-threaded) | 42k | 193k | 120k | 449k | 160k | **452k** |
+| (`libuv`) grpcxx v0.2.0 (2 workers)       | 33k | 166k | 120k | **431k** | 91k  | 425k |
+| (`libuv`) grpcxx v0.2.0 (10 workers)      | 34k | 164k | 118k | **450k** | 101k | 408k |
+| (`asio`) grpcxx (single-threaded)         | 15k | 22k  | 63k  | 110k | 91k  | **114k** |
+| (`asio`) grpcxx (3 workers)               | 27k | 112k | 84k  | 267k | 69k  | **290k** |
+| (`asio`) grpcxx (10 workers)              | 25k | 80k  | 75k  | 150k | 62k  | **162k** |
 
 ## Documentation
 
@@ -113,7 +116,8 @@ rpcHello::result_type ServiceImpl::call<rpcHello>(
 }
 ```
 
-> 💡 The generated `ServiceImpl` struct is a very simple struct with 6 lines of code. You can easily create your own
+> > [!TIP]
+> The generated `ServiceImpl` struct is a very simple struct with 6 lines of code. You can easily create your own
 instead of having to use the generated code giving you more flexibility to structure your code in a way that works best
 for you. An example of this can be found [here](https://github.com/uatuko/grpcxx/blob/c6934c3223a76f50439bb1dda98aa25482829b95/examples/helloworld/main.cpp#L19).
 
@@ -127,6 +131,6 @@ helloworld::v1::Greeter::Service     service(greeter); // Service (using the RPC
 grpcxx::server server; // Server instance
 server.add(service); // Add the service to the server instance
 
-std::printf("Listening on [127.0.0.1:7000] ...\n");
-server.run("127.0.0.1", 7000); // Listen and serve
+std::printf("Listening on [127.0.0.1:50051] ...\n");
+server.run("127.0.0.1", 50051); // Listen and serve
 ```
