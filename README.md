@@ -15,6 +15,7 @@
 
 ## Benchmarks
 
+> [!NOTE]
 > You can find more detailed benchmark results in https://github.com/uatuko/grpcxx/issues/25 and https://github.com/uatuko/grpcxx/issues/21#issuecomment-1890901856.
 
 |                                      | 1a  | 1b   | 2a   | 2b   | 3a   | 3b   |
@@ -56,7 +57,8 @@ FetchContent_MakeAvailable(grpcxx)
 
 ### Using grpcxx
 
-> 💡 You can find a complete _helloworld_ example [here](https://github.com/uatuko/grpcxx/tree/main/examples/helloworld).
+> [!TIP]
+> You can find a complete _helloworld_ example [here](https://github.com/uatuko/grpcxx/tree/main/examples/helloworld).
 
 In order to use grpcxx (similar to other gRPC implementations) you'll need to;
 

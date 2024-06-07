@@ -14,7 +14,8 @@ defines a `Greeter` gRPC service with one method. This is a slightly changed ver
 
 `.proto` files are compiled using a CMake custom build rule [here](https://github.com/uatuko/grpcxx/blob/821a3bfe3f91eb523f515e56b9482adf4d66011a/examples/helloworld/proto/CMakeLists.txt#L19).
 
-> 💡 You can find more info on compiling `.proto` files [here](../../docs/protoc-gen-grpcxx.md).
+> [!NOTE]
+> You can find more info on compiling `.proto` files [here](../../docs/protoc-gen-grpcxx.md).
 
 ### `main.cpp`
 

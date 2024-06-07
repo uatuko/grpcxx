@@ -1,8 +1,10 @@
 # API Documentation
 
-> ⚠️ `grpcxx::detail` namespace is considered internal and may change without any warning.
+> [!WARNING]
+> `grpcxx::detail` namespace is considered internal and may change without any warning.
 
-> 💡 (`asio`) indicates it's only available when using Asio (i.e. compiled with `GRPCXX_USE_ASIO`).
+> [!IMPORTANT]
+> (`asio`) indicates it's only available when using Asio (i.e. compiled with `GRPCXX_USE_ASIO`).
 > (`uv`) indicates it's only available when using libuv.
 
 - [`grpcxx::rpc`](#grpcxxrpc)
@@ -136,7 +138,8 @@ Constructs a new server instance.
 2. Constructs a server with `n` worker threads (in _addition_ to the I/O thread). If `n` is `0`, all
 requests will be processed in the I/O thread.
 
-> 💡 Number of worker threads can impact throughput and should be tuned for your use-case (i.e. more
+> [!TIP]
+> Number of worker threads can impact throughput and should be tuned for your use-case (i.e. more
 > workers will not always increase throughput).
 
 #### add
@@ -171,7 +174,8 @@ Listen and serve incoming gRPC requests.
 
 1. Start listening on `ip` and `port` for incoming gRPC connections and serve requests.
 
-> ⚠️ If used with Asio, this will create and run an `io_context` executor on the main thread.
+> [!IMPORTANT]
+> If used with Asio, this will create and run an `io_context` executor on the main thread.
 
 ### Example (`asio`)
 
@@ -237,7 +241,8 @@ Retrieve gRPC custom metadata.
 1. Retrieve gRPC custom metadata value for key `key`. If there's no value found for the specified key,
 an empty value is returned.
 
-> 💡 _Custom Metadata_ are essentially HTTP/2 headers that doesn't start with `:` or `grpc-`.
+> [!TIP]
+> _Custom Metadata_ are essentially HTTP/2 headers that doesn't start with `:` or `grpc-`.
 
 
 ## `grpcxx::status`
