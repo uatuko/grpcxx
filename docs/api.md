@@ -5,7 +5,7 @@
 
 > [!IMPORTANT]
 > (`asio`) indicates it's only available when using Asio (i.e. compiled with `GRPCXX_USE_ASIO`).
-> (`uv`) indicates it's only available when using libuv.
+> (`libuv`) indicates it's only available when using libuv, which is the default.
 
 - [`grpcxx::rpc`](#grpcxxrpc)
   - [Template parameters](#template-parameters)
@@ -20,7 +20,7 @@
     - [listen (`asio`)](#listen-asio)
     - [run](#run)
   - [Example (`asio`)](#example-asio)
-  - [Example (`uv`)](#example-uv)
+  - [Example (`libuv`)](#example-uv)
 - [`grpcxx::context`](#grpcxxcontext)
   - [Member types](#member-types)
   - [Member functions](#member-functions-1)
@@ -130,7 +130,7 @@ A gRPC server capable of serving multiple clients.
 |||
 ----------------------------------------------------------------------- | ---
 `server()`                                                              | (1) (`asio`)
-`server(std::size_t n = std::thread::hardware_concurrency()) noexcept;` | (2) (`uv`)
+`server(std::size_t n = std::thread::hardware_concurrency()) noexcept;` | (2) (`libuv`)
 
 Constructs a new server instance.
 
@@ -199,7 +199,7 @@ for (auto &t : threads) {
 }
 ```
 
-### Example (`uv`)
+### Example (`libuv`)
 
 ```cpp
 ServiceImpl impl;
