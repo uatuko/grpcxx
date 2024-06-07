@@ -116,10 +116,10 @@ rpcHello::result_type ServiceImpl::call<rpcHello>(
 }
 ```
 
-> > [!TIP]
-> The generated `ServiceImpl` struct is a very simple struct with 6 lines of code. You can easily create your own
-instead of having to use the generated code giving you more flexibility to structure your code in a way that works best
-for you. An example of this can be found [here](https://github.com/uatuko/grpcxx/blob/c6934c3223a76f50439bb1dda98aa25482829b95/examples/helloworld/main.cpp#L19).
+> [!TIP]
+> The generated `ServiceImpl` struct is a very simple struct with 6 lines of code. You can easily create
+> your own instead of having to use the generated code giving you more flexibility to structure your
+> code in a way that works best for you. An example of this can be found [here](https://github.com/uatuko/grpcxx/blob/c6934c3223a76f50439bb1dda98aa25482829b95/examples/helloworld/main.cpp#L19).
 
 #### Running a server
 
