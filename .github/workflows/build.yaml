@@ -21,7 +21,7 @@ jobs:
           - g++
           - clang++
         container:
-          - ubuntu:23.04
+          - ubuntu:24.04
         variant:
           - libuv
           - asio
