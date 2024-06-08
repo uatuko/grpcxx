@@ -4,7 +4,8 @@ This example demonstrates how to use [`google.rpc.Status`](https://github.com/go
 messages to send back detailed gRPC error responses. Refer to https://github.com/uatuko/grpcxx/issues/11 for additional
 information on how this works.
 
-> 💡 The protobuf files in `proto/google/**` are copied from [googleapis](https://github.com/googleapis/googleapis/tree/master/google).
+> [!NOTE]
+> The protobuf files in `proto/google/**` are copied from [googleapis](https://github.com/googleapis/googleapis/tree/master/google).
 
 e.g.
 ```

@@ -9,7 +9,7 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
-    container: ubuntu:23.10
+    container: ubuntu:24.04
 
     steps:
       - name: Install dependencies
@@ -18,5 +18,5 @@ jobs:
           apt-get install -y --no-install-recommends \
             clang-format make
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - run: make lint:ci

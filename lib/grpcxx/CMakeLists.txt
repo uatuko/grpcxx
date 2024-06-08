@@ -1,36 +1,65 @@
 add_library(grpcxx)
 target_sources(grpcxx
 	PRIVATE
-		conn.cpp
 		context.cpp
 		message.cpp
-		reader.cpp
 		request.cpp
-		scheduler.cpp
-		server.cpp
-		writer.cpp
+		server_base.cpp
 	PUBLIC
 		FILE_SET headers TYPE HEADERS
 		FILES
 			context.h
 			fixed_string.h
 			rpc.h
-			scheduler.h
 			server.h
+			server_base.h
 			service.h
 			status.h
-			task.h
 	PRIVATE
 		FILE_SET private_headers TYPE HEADERS
 		FILES
-			conn.h
-			coroutine.h
 			message.h
-			reader.h
 			request.h
 			response.h
-			writer.h
 )
+
+if (NOT GRPCXX_USE_ASIO)
+	target_sources(grpcxx
+		PRIVATE
+			uv/conn.cpp
+			uv/reader.cpp
+			uv/scheduler.cpp
+			uv/server.cpp
+			uv/writer.cpp
+		PUBLIC
+			FILE_SET headers TYPE HEADERS
+			FILES
+				uv/server.h
+				uv/scheduler.h
+				uv/task.h
+		PRIVATE
+			FILE_SET private_headers TYPE HEADERS
+			FILES
+				uv/conn.h
+				uv/coroutine.h
+				uv/reader.h
+				uv/writer.h
+	)
+else()
+	target_sources(grpcxx
+		PRIVATE
+			asio/conn.cpp
+			asio/server.cpp
+		PUBLIC
+			FILE_SET headers TYPE HEADERS
+			FILES
+				asio/server.h
+		PRIVATE
+			FILE_SET private_headers TYPE HEADERS
+			FILES
+				asio/conn.h
+	)
+endif()
 
 # h2 sources
 target_sources(grpcxx
@@ -47,6 +76,21 @@ target_sources(grpcxx
 target_link_libraries(grpcxx
 	PRIVATE
 		libnghttp2::nghttp2
-	PUBLIC
-		libuv::uv
 )
+
+if (NOT GRPCXX_USE_ASIO)
+	target_link_libraries(grpcxx
+		PUBLIC
+			libuv::uv
+	)
+else()
+	target_link_libraries(grpcxx
+		PUBLIC
+			asio
+	)
+
+	target_compile_definitions(grpcxx
+		PUBLIC
+			GRPCXX_USE_ASIO
+	)
+endif()

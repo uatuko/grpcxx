@@ -9,6 +9,7 @@
 
 namespace grpcxx {
 namespace h2 {
+namespace detail {
 struct event {
 	using header_t = std::optional<class header>;
 
@@ -26,5 +27,6 @@ struct event {
 
 	header_t header = std::nullopt;
 };
+} // namespace detail
 } // namespace h2
 } // namespace grpcxx

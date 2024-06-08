@@ -6,6 +6,7 @@
 
 namespace grpcxx {
 namespace h2 {
+namespace detail {
 session::session() : _data(), _events(), _session(nullptr) {
 	// Initialise HTTP/2 session
 	nghttp2_session_callbacks *callbacks;
@@ -97,7 +98,7 @@ int session::header_cb(
 	return 0;
 }
 
-void session::headers(int32_t stream_id, h2::headers hdrs) const {
+void session::headers(int32_t stream_id, detail::headers hdrs) const {
 	std::vector<nghttp2_nv> nv;
 	nv.reserve(hdrs.size());
 
@@ -174,7 +175,7 @@ int session::stream_close_cb(
 	return 0;
 }
 
-void session::trailers(int32_t stream_id, h2::headers hdrs) const {
+void session::trailers(int32_t stream_id, detail::headers hdrs) const {
 	std::vector<nghttp2_nv> nv;
 	nv.reserve(hdrs.size());
 
@@ -196,5 +197,6 @@ void session::trailers(int32_t stream_id, h2::headers hdrs) const {
 		throw std::runtime_error(std::string("Failed to submit trailers: ") + nghttp2_strerror(r));
 	}
 }
+} // namespace detail
 } // namespace h2
 } // namespace grpcxx

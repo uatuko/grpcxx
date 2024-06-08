@@ -2,10 +2,9 @@
 
 #include "conn.h"
 #include "coroutine.h"
-#include "request.h"
-#include "response.h"
 
 namespace grpcxx {
+namespace uv {
 server::server(std::size_t n) noexcept : _scheduler(_loop, n) {
 	uv_tcp_init(_loop, &_handle);
 	_handle.data = this;
@@ -40,30 +39,7 @@ void server::conn_cb(uv_stream_t *stream, int status) {
 	s->conn(stream);
 }
 
-detail::response server::process(const detail::request &req) const noexcept {
-	if (!req) {
-		return {req.id(), status::code_t::invalid_argument};
-	}
-
-	auto it = _services.find(req.service());
-	if (it == _services.end()) {
-		return {req.id(), status::code_t::not_found};
-	}
-
-	context          ctx(req);
-	detail::response resp(req.id());
-	try {
-		auto r = it->second(ctx, req.method(), req.data());
-		resp.status(std::move(r.first));
-		resp.data(std::move(r.second));
-	} catch (std::exception &e) {
-		return {req.id(), status::code_t::internal};
-	}
-
-	return resp;
-}
-
-void server::run(const std::string_view &ip, int port) {
+void server::run(std::string_view ip, int port) {
 	struct sockaddr_in addr;
 	uv_ip4_addr(ip.data(), port, &addr);
 
@@ -78,4 +54,5 @@ void server::run(const std::string_view &ip, int port) {
 
 	uv_run(_loop, UV_RUN_DEFAULT);
 }
+} // namespace uv
 } // namespace grpcxx

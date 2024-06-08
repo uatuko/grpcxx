@@ -11,7 +11,7 @@ jobs:
   linux:
     runs-on: ubuntu-latest
     concurrency:
-      group: ${{ github.workflow_ref }}-${{ github.job }}_${{ matrix.container }}-${{ matrix.compiler }}
+      group: ${{ github.workflow_ref }}-${{ github.job }}_${{ matrix.container }}-${{ matrix.compiler }}-${{ matrix.variant }}
     container: ${{ matrix.container }}
 
     strategy:
@@ -21,12 +21,17 @@ jobs:
           - g++
           - clang++
         container:
-          - ubuntu:23.04
+          - ubuntu:24.04
+        variant:
+          - libuv
+          - asio
         include:
           - compiler: g++
             dependencies: g++
           - compiler: clang++
             dependencies: clang
+          - variant: asio
+            cmake_args: -DGRPCXX_USE_ASIO=ON
 
     steps:
       - name: Install dependencies
@@ -37,17 +42,18 @@ jobs:
             cmake ninja-build \
             libprotobuf-dev libprotoc-dev protobuf-compiler
 
-      - uses: actions/checkout@v3
-      - uses: actions/cache@v3
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
         with:
           path: .build
-          key: ${{ runner.arch }}_${{ matrix.container }}-${{ matrix.compiler }}-${{ hashFiles('cmake/dependencies.cmake') }}
+          key: ${{ runner.arch }}_${{ matrix.container }}-${{ matrix.compiler }}-${{ matrix.variant }}-${{ hashFiles('cmake/dependencies.cmake') }}
 
       - name: Configure CMake
         run: |
           cmake -B .build -G Ninja \
             -DCMAKE_CXX_COMPILER=${{ matrix.compiler }} \
-            -DCMAKE_BUILD_TYPE=Release
+            -DCMAKE_BUILD_TYPE=Release \
+            ${{ matrix.cmake_args }}
       - name: Build
         run: |
           cmake --build .build --config Release
@@ -56,33 +62,42 @@ jobs:
   macos:
     runs-on: macos-13 # [Nov. 2023] `macos-latest` is pointing to `macos-12` which doesn't support coroutines.
     concurrency:
-      group: ${{ github.workflow_ref }}-${{ github.job }}_${{ matrix.compiler }}
+      group: ${{ github.workflow_ref }}-${{ github.job }}_${{ matrix.compiler }}-${{ matrix.variant }}
     strategy:
       fail-fast: false
       matrix:
         compiler:
           - g++
           - clang++
+        variant:
+          - libuv
+          - boost_asio
+        include:
+          - variant: boost_asio
+            cmake_args: -DGRPCXX_USE_ASIO=ON
+            dependencies: boost
 
     steps:
       - name: Install dependencies
         run: |
           brew install \
             protobuf@3 \
-            ninja
+            ninja \
+            ${{ matrix.dependencies }}
           brew link protobuf@3
 
-      - uses: actions/checkout@v3
-      - uses: actions/cache@v3
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
         with:
           path: .build
-          key: ${{ runner.arch }}_${{ runner.os }}-${{ matrix.compiler }}-${{ hashFiles('cmake/dependencies.cmake') }}
+          key: ${{ runner.arch }}_${{ runner.os }}-${{ matrix.compiler }}-${{ matrix.variant }}-${{ hashFiles('cmake/dependencies.cmake') }}
 
       - name: Configure CMake
         run: |
           cmake -B .build -G Ninja \
             -DCMAKE_CXX_COMPILER=${{ matrix.compiler }} \
-            -DCMAKE_BUILD_TYPE=Release
+            -DCMAKE_BUILD_TYPE=Release \
+            ${{ matrix.cmake_args }}
       - name: Build
         run: |
           cmake --build .build --config Release

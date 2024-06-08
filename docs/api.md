@@ -1,6 +1,11 @@
 # API Documentation
 
-> ⚠️ `grpcxx::detail` namespace is considered internal and may change without any warning.
+> [!WARNING]
+> `grpcxx::detail` namespace is considered internal and may change without any warning.
+
+> [!IMPORTANT]
+> (`asio`) indicates it's only available when using Asio (i.e. compiled with `GRPCXX_USE_ASIO`).
+> (`libuv`) indicates it's only available when using libuv, which is the default.
 
 - [`grpcxx::rpc`](#grpcxxrpc)
   - [Template parameters](#template-parameters)
@@ -12,8 +17,10 @@
   - [Member functions](#member-functions)
     - [(constructor)](#constructor)
     - [add](#add)
+    - [listen (`asio`)](#listen-asio)
     - [run](#run)
-  - [Example](#example-2)
+  - [Example (`asio`)](#example-asio)
+  - [Example (`libuv`)](#example-uv)
 - [`grpcxx::context`](#grpcxxcontext)
   - [Member types](#member-types)
   - [Member functions](#member-functions-1)
@@ -25,7 +32,7 @@
     - [operator std::string\_view](#operator-stdstring_view)
     - [code](#code)
     - [str](#str)
-  - [Example](#example-3)
+  - [Example](#example-2)
 
 
 ## `grpcxx::rpc`
@@ -122,13 +129,18 @@ A gRPC server capable of serving multiple clients.
 
 |||
 ----------------------------------------------------------------------- | ---
-`server(std::size_t n = std::thread::hardware_concurrency()) noexcept;` | (1)
+`server()`                                                              | (1) (`asio`)
+`server(std::size_t n = std::thread::hardware_concurrency()) noexcept;` | (2) (`libuv`)
 
 Constructs a new server instance.
 
-1. Constructs a server with `n` worker threads (in _addition_ to the I/O thread). If `n` is `0`, all requests will be processed in the I/O thread.
+1. Constructs a server using the default constructor.
+2. Constructs a server with `n` worker threads (in _addition_ to the I/O thread). If `n` is `0`, all
+requests will be processed in the I/O thread.
 
-> 💡 Number of worker threads can impact throughput and should be tuned for your use-case (i.e. more workers will not always increase throughput).
+> [!TIP]
+> Number of worker threads can impact throughput and should be tuned for your use-case (i.e. more
+> workers will not always increase throughput).
 
 #### add
 
@@ -138,8 +150,19 @@ Constructs a new server instance.
 
 Add a gRPC service implementation to the server.
 
-1. Add a gRPC service implemented by `s`. `s` must stay in scope while the server in running. If two services are added
-with the same name, the second will be ignored.
+1. Add a gRPC service implemented by `s`. `s` must stay in scope while the server in running. If two
+services are added with the same name, the second will be ignored.
+
+#### listen (`asio`)
+
+|||
+--------------------------------------- | ---
+`ASIO_NS::awaitable<void> listen(std::string_view ip, int port);` | (1)
+
+Listen and prepare to serve incoming gRPC requests.
+
+1. Await on a coroutine executor and listen on `ip` and `port` for incoming gRPC connections. The returned
+_awaitable_ must be passed on to an `io_context` executor to serve requests.
 
 #### run
 
@@ -151,7 +174,32 @@ Listen and serve incoming gRPC requests.
 
 1. Start listening on `ip` and `port` for incoming gRPC connections and serve requests.
 
-### Example
+> [!IMPORTANT]
+> If used with Asio, this will create and run an `io_context` executor on the main thread.
+
+### Example (`asio`)
+
+```cpp
+ServiceImpl impl;
+Service     service(impl);
+
+grpcxx::server server;
+server.add(service);
+
+asio::io_context ctx;
+asio::co_spawn(ctx, server.listen("127.0.0.1", 50051), asio::detached);
+
+std::list<std::thread> threads;
+for (auto i = 0; i < 2; i++) {
+  threads.emplace_back([&ctx] { ctx.run(); });
+}
+
+for (auto &t : threads) {
+  t.join();
+}
+```
+
+### Example (`libuv`)
 
 ```cpp
 ServiceImpl impl;
@@ -160,7 +208,7 @@ Service     service(impl);
 grpcxx::server server(2);
 server.add(service);
 
-server.run("127.0.0.1", 7000);
+server.run("127.0.0.1", 50051);
 ```
 
 
@@ -190,10 +238,11 @@ class context;
 
 Retrieve gRPC custom metadata.
 
-1. Retrieve gRPC custom metadata value for key `key`. If there's no value found for the specified key, an empty value
-is returned.
+1. Retrieve gRPC custom metadata value for key `key`. If there's no value found for the specified key,
+an empty value is returned.
 
-> 💡 _Custom Metadata_ are essentially HTTP/2 headers that doesn't start with `:` or `grpc-`.
+> [!TIP]
+> _Custom Metadata_ are essentially HTTP/2 headers that doesn't start with `:` or `grpc-`.
 
 
 ## `grpcxx::status`
@@ -244,8 +293,8 @@ enum struct code_t : int8_t {
 `status(code_t code, std::string &&details)` | (2)
 
 1. Construct a status with an optional status code `code`.
-2. Construct a status with code `code` and a base64 encoded `details`. Although it's not in official gRPC documentation
-(yet), `details` should be base64 encoded serialised value of a [`google.rpc.Status`](https://github.com/googleapis/googleapis/blob/db5ce67d735d2ceb6fe925f3e317a3f30835cfd6/google/rpc/status.proto)
+2. Construct a status with code `code` and a base64 encoded `details`. Although it's not in official
+gRPC documentation (yet), `details` should be base64 encoded serialised value of a [`google.rpc.Status`](https://github.com/googleapis/googleapis/blob/db5ce67d735d2ceb6fe925f3e317a3f30835cfd6/google/rpc/status.proto)
 message.
 
 #### operator std::string\_view
