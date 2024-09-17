@@ -1,0 +1,6 @@
+repos:
+- repo: https://github.com/pre-commit/mirrors-clang-format.git
+  rev: v16.0.6
+  hooks:
+    - id: clang-format
+      name: Check C/C++ code formatting with clang-format
