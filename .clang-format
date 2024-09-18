@@ -28,16 +28,18 @@ BreakInheritanceList: AfterColon
 ColumnLimit: 100
 IncludeBlocks: Regroup
 IncludeCategories:
-- Regex: <[[:alnum:]_]+>
+- Regex: ^"[[:alnum:].]+/
   Priority: 1
-- Regex: <[[:alnum:].]+>
+- Regex: ^"[[:alnum:]]*
   Priority: 2
-- Regex: ^<[[:alnum:]]+/
+- Regex: ^<[[:alnum:]_]+/
   Priority: 3
-- Regex: ^"[[:alnum:]]+/
+- Regex: ^<[[:alnum:]]+\.
   Priority: 4
-- Regex: .*
+- Regex: ^<[[:alnum:]_]+>
   Priority: 5
+- Regex: .*
+  Priority: 6
   SortPriority: 0
 InsertNewlineAtEOF: true
 PenaltyReturnTypeOnItsOwnLine: 200
