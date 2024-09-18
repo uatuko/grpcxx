@@ -1,10 +1,11 @@
 #pragma once
 
+#include <uv.h>
+
 #include <coroutine>
+#include <exception>
 #include <memory>
 #include <string_view>
-
-#include <uv.h>
 
 namespace grpcxx {
 namespace uv {

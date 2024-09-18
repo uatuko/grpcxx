@@ -1,6 +1,7 @@
 #include "session.h"
 
 #include <array>
+#include <cstdint>
 #include <cstring>
 #include <stdexcept>
 

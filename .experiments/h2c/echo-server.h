@@ -1,11 +1,12 @@
 #pragma once
 
-#include <map>
-#include <string>
+#include <nghttp2/nghttp2.h>
 
 #include <uv.h>
 
-#include <nghttp2/nghttp2.h>
+#include <cstdint>
+#include <map>
+#include <string>
 
 struct h2_stream_t {
 	using headers_t = std::map<std::string, std::string>;

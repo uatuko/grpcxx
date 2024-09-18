@@ -1,5 +1,7 @@
 #include "server.h"
 
+#include "conn.h"
+
 #ifdef BOOST_ASIO_STANDALONE
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/detached.hpp>
@@ -13,8 +15,6 @@
 #include <asio/strand.hpp>
 #include <asio/write.hpp>
 #endif
-
-#include "conn.h"
 
 namespace grpcxx {
 namespace asio {

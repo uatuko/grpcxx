@@ -3,13 +3,13 @@
 const readline = require('readline');
 
 const reader = readline.createInterface({
-	input: process.stdin,
+	input : process.stdin,
 });
 
 async function main() {
-	const results = {};
-	let output = '';
-	let scenario = '';
+	const results  = {};
+	let   output   = '';
+	let   scenario = '';
 
 	for await (const line of reader) {
 		if (scenario === '' && !line.startsWith('[bench] :begin - ')) {
@@ -27,7 +27,7 @@ async function main() {
 				output,
 			};
 
-			output = '';
+			output   = '';
 			scenario = '';
 			continue;
 		}
@@ -35,34 +35,34 @@ async function main() {
 		output += `${line}\n`;
 
 		if (line.startsWith('finished in ')) {
-			const regex = /^.*, (.*) req\/s,.*$/;
+			const regex   = /^.*, (.*) req\/s,.*$/;
 			const matches = line.match(regex);
 
 			if (matches.length == 2) {
 				results[scenario] = {
 					...results[scenario],
-					result: Math.round(matches[1]),
+					result : Math.round(matches[1]),
 				};
 			};
 		}
 	}
 
 	let row = '| [TODO] |';
-	let md = '<details>\n' +
-		'<summary>[TODO]</summary>' +
-		'\n\n';
+	let md  = '<details>\n' +
+			 '<summary>[TODO]</summary>' +
+			 '\n\n';
 
 	for (const [scenario, result] of Object.entries(results)) {
 		md += `### ${scenario}\n` +
-			'```\n' +
-			`${result.output}` +
-			'```\n\n';
+			  '```\n' +
+			  `${result.output}` +
+			  '```\n\n';
 
 		row += ` ${Math.round(result.result / 1000)}k |`
 	}
 
 	md += '\n' +
-		'</details>\n';
+		  '</details>\n';
 
 	console.log(md);
 	console.log(row);

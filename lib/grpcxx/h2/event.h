@@ -1,11 +1,10 @@
 #pragma once
 
-#include <map>
-#include <optional>
-#include <string>
-#include <string_view>
-
 #include "headers.h"
+
+#include <cstdint>
+#include <optional>
+#include <string_view>
 
 namespace grpcxx {
 namespace h2 {
