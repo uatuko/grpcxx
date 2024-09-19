@@ -1,12 +1,13 @@
 #pragma once
 
-#include <string_view>
-#include <thread>
+#include "../server_base.h"
+
+#include "scheduler.h"
 
 #include <uv.h>
 
-#include "../server_base.h"
-#include "scheduler.h"
+#include <string_view>
+#include <thread>
 
 namespace grpcxx {
 namespace uv {

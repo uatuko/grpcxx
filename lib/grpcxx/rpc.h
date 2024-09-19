@@ -1,11 +1,12 @@
 #pragma once
 
-#include <functional>
-#include <optional>
-#include <string>
-
 #include "fixed_string.h"
 #include "status.h"
+
+#include <optional>
+#include <stdexcept>
+#include <string>
+#include <string_view>
 
 namespace grpcxx {
 template <fixed_string M, typename T, typename U> struct rpc {

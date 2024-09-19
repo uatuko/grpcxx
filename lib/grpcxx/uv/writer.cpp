@@ -1,5 +1,6 @@
 #include "writer.h"
 
+#include <stdexcept>
 #include <string>
 
 namespace grpcxx {

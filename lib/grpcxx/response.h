@@ -1,9 +1,10 @@
 #pragma once
 
-#include <string>
-
 #include "message.h"
 #include "status.h"
+
+#include <cstdint>
+#include <string>
 
 namespace grpcxx {
 namespace detail {

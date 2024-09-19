@@ -1,6 +1,6 @@
-#include <google/protobuf/compiler/plugin.h>
-
 #include "grpcxx.h"
+
+#include <google/protobuf/compiler/plugin.h>
 
 int main(int argc, char *argv[]) {
 	Grpcxx g;

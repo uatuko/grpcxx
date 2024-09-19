@@ -1,10 +1,13 @@
 #pragma once
 
-#include <coroutine>
-#include <memory>
-#include <string>
-
 #include <uv.h>
+
+#include <coroutine>
+#include <exception>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <string_view>
 
 class writer {
 public:

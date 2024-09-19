@@ -1,7 +1,8 @@
 #pragma once
 
-#include <forward_list>
-#include <unordered_map>
+#include "../h2/session.h"
+#include "../request.h"
+#include "../response.h"
 
 #ifdef BOOST_ASIO_STANDALONE
 #include <boost/asio/awaitable.hpp>
@@ -11,9 +12,8 @@
 #include <asio/ip/tcp.hpp>
 #endif
 
-#include "../h2/session.h"
-#include "../request.h"
-#include "../response.h"
+#include <forward_list>
+#include <unordered_map>
 
 namespace grpcxx {
 namespace asio {

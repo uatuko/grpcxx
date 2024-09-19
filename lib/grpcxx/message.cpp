@@ -1,8 +1,9 @@
 #include "message.h"
 
 #include <array>
-#include <condition_variable>
+#include <cstdint>
 #include <stdexcept>
+#include <string>
 
 namespace grpcxx {
 namespace detail {

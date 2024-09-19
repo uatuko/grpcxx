@@ -2,6 +2,9 @@
 
 #include <google/protobuf/compiler/code_generator.h>
 
+#include <cstdint>
+#include <string>
+
 class Grpcxx : public google::protobuf::compiler::CodeGenerator {
 public:
 	Grpcxx() {}

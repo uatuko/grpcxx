@@ -1,19 +1,21 @@
 #pragma once
 
+#include "../h2/session.h"
+#include "../request.h"
+#include "../response.h"
+
+#include "reader.h"
+#include "task.h"
+#include "writer.h"
+
+#include <uv.h>
+
+#include <cstdint>
 #include <forward_list>
 #include <memory>
 #include <string>
 #include <string_view>
 #include <unordered_map>
-
-#include <uv.h>
-
-#include "../h2/session.h"
-#include "../request.h"
-#include "../response.h"
-#include "reader.h"
-#include "task.h"
-#include "writer.h"
 
 namespace grpcxx {
 namespace uv {

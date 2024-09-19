@@ -5,6 +5,9 @@
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/io/zero_copy_stream.h>
 
+#include <memory>
+#include <string>
+
 bool Grpcxx::Generate(
 	const google::protobuf::FileDescriptor *file, const std::string &parameter,
 	google::protobuf::compiler::GeneratorContext *context, std::string *error) const {

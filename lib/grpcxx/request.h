@@ -1,9 +1,10 @@
 #pragma once
 
+#include "message.h"
+
+#include <cstdint>
 #include <string>
 #include <unordered_map>
-
-#include "message.h"
 
 namespace grpcxx {
 namespace detail {

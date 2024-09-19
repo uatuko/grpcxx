@@ -1,10 +1,12 @@
-#include <cstdio>
+#include "examples/v1/errors.grpcxx.pb.h"
 
 #include <google/rpc/code.pb.h>
 #include <google/rpc/status.pb.h>
 #include <grpcxx/server.h>
 
-#include "examples/v1/errors.grpcxx.pb.h"
+#include <cstdio>
+#include <string>
+#include <string_view>
 
 namespace b64 {
 static constexpr char alphabet[] =

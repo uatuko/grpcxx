@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../server_base.h"
+
 #ifdef BOOST_ASIO_STANDALONE
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/ip/tcp.hpp>
@@ -8,7 +10,7 @@
 #include <asio/ip/tcp.hpp>
 #endif
 
-#include "../server_base.h"
+#include <string_view>
 
 namespace grpcxx {
 namespace asio {

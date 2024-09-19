@@ -1,11 +1,12 @@
 #pragma once
 
-#include <string>
-#include <vector>
+#include "event.h"
 
 #include <nghttp2/nghttp2.h>
 
-#include "event.h"
+#include <cstdint>
+#include <string>
+#include <vector>
 
 namespace grpcxx {
 namespace h2 {

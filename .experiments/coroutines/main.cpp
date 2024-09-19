@@ -1,6 +1,6 @@
-#include <cstdio>
-
 #include "server.h"
+
+#include <cstdio>
 
 int main() {
 	server s;

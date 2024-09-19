@@ -1,8 +1,8 @@
-#include <cstdio>
+#include "helloworld/v1/greeter.grpcxx.pb.h"
 
 #include <grpcxx/server.h>
 
-#include "helloworld/v1/greeter.grpcxx.pb.h"
+#include <cstdio>
 
 using namespace helloworld::v1::Greeter;
 

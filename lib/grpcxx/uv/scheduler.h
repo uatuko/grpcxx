@@ -1,5 +1,9 @@
 #pragma once
 
+#include "task.h"
+
+#include <uv.h>
+
 #include <condition_variable>
 #include <coroutine>
 #include <functional>
@@ -7,10 +11,6 @@
 #include <mutex>
 #include <queue>
 #include <thread>
-
-#include <uv.h>
-
-#include "task.h"
 
 namespace grpcxx {
 namespace uv {
