@@ -3,7 +3,7 @@
 const readline = require('readline');
 
 const reader = readline.createInterface({
-	input : process.stdin,
+	input: process.stdin,
 });
 
 async function main() {
@@ -49,20 +49,20 @@ async function main() {
 
 	let row = '| [TODO] |';
 	let md  = '<details>\n' +
-			 '<summary>[TODO]</summary>' +
-			 '\n\n';
+			'<summary>[TODO]</summary>' +
+			'\n\n';
 
 	for (const [scenario, result] of Object.entries(results)) {
 		md += `### ${scenario}\n` +
-			  '```\n' +
-			  `${result.output}` +
-			  '```\n\n';
+			'```\n' +
+			`${result.output}` +
+			'```\n\n';
 
 		row += ` ${Math.round(result.result / 1000)}k |`
 	}
 
 	md += '\n' +
-		  '</details>\n';
+		'</details>\n';
 
 	console.log(md);
 	console.log(row);
