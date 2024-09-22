@@ -11,7 +11,7 @@ Fix header file include order to help with consistent compilations across differ
 ### New Contributors
 * @tchernobog
 
-**Full Changelog**: https://github.com/uatuko/grpcxx/compare/v0.3.0...v.0.4.0
+**Full Changelog**: https://github.com/uatuko/grpcxx/compare/v0.3.0...v0.4.0
 
 
 ## v0.3.0 - 13th June, 2024
