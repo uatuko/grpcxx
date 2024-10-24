@@ -21,3 +21,7 @@ target_compile_definitions(protoc-gen-grpcxx
 		PLUGIN_NAME="$<TARGET_NAME:protoc-gen-grpcxx>"
 		PLUGIN_VERSION="${PROJECT_VERSION}"
 )
+
+install(TARGETS protoc-gen-grpcxx
+        EXPORT grpcxx
+		COMPONENT Development)
