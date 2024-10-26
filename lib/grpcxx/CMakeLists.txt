@@ -1,3 +1,9 @@
+# NOTE: if you wonder why we use header file set BASE_DIRS
+# of .., it is because other projects want to #include <grpcxx/something.h>.
+# Normally the CMakeLists.txt file for building a library would be
+# one level above, or the public headers into their own
+# subfolder, but this works too.
+
 add_library(grpcxx)
 target_sources(grpcxx
 	PRIVATE
@@ -7,6 +13,7 @@ target_sources(grpcxx
 		server_base.cpp
 	PUBLIC
 		FILE_SET headers TYPE HEADERS
+		BASE_DIRS ..
 		FILES
 			context.h
 			fixed_string.h
@@ -33,6 +40,7 @@ if (NOT GRPCXX_USE_ASIO)
 			uv/writer.cpp
 		PUBLIC
 			FILE_SET headers TYPE HEADERS
+			BASE_DIRS ..
 			FILES
 				uv/server.h
 				uv/scheduler.h
@@ -52,6 +60,7 @@ else()
 			asio/server.cpp
 		PUBLIC
 			FILE_SET headers TYPE HEADERS
+			BASE_DIRS ..
 			FILES
 				asio/server.h
 		PRIVATE
@@ -94,3 +103,9 @@ else()
 			GRPCXX_USE_ASIO
 	)
 endif()
+
+include(GNUInstallDirs)
+install(TARGETS grpcxx EXPORT grpcxx
+		LIBRARY COMPONENT Runtime
+        FILE_SET headers
+			COMPONENT Development)

@@ -9,6 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 
+option(GRPCXX_HERMETIC_BUILD "Fetch and build all dependencies instead of relying on system libraries" ON)
 option(GRPCXX_USE_ASIO "Use asio instead of libuv for I/O and event loop" OFF)
 
 include(CMakeDependentOption)
@@ -34,3 +35,27 @@ endif()
 
 add_subdirectory(lib)
 add_subdirectory(src)
+
+# Installation steps to make find_package(grpcxx) work
+# in other projects.
+include(CMakePackageConfigHelpers)
+include(GNUInstallDirs)
+set(cmake_conf_dir ${CMAKE_INSTALL_LIBDIR}/cmake/grpcxx)
+configure_package_config_file(cmake/grpcxx-config.cmake.in cmake/grpcxx-config.cmake
+    INSTALL_DESTINATION ${cmake_conf_dir})
+write_basic_package_version_file(cmake/grpcxx-version.cmake
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY SameMinorVersion)
+install(FILES
+            ${CMAKE_CURRENT_BINARY_DIR}/cmake/grpcxx-version.cmake
+			${CMAKE_CURRENT_BINARY_DIR}/cmake/grpcxx-config.cmake
+        DESTINATION ${cmake_conf_dir}
+		COMPONENT Development)
+export(EXPORT grpcxx
+       FILE ${CMAKE_CURRENT_BINARY_DIR}/cmake/grpcxx-targets.cmake
+       NAMESPACE grpcxx::)
+install(EXPORT grpcxx
+        NAMESPACE grpcxx::
+        COMPONENT Development
+		FILE grpcxx-targets.cmake
+        DESTINATION ${cmake_conf_dir})
