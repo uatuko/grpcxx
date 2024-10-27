@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.5.0 - 27th October, 2024
+
+### 🔦 Spotlight
+Builds now support linking to system installed dependencies and provide install targets (https://github.com/uatuko/grpcxx/pull/40).
+
+### What's Changed
+* Install and export artifacts by @tchernobog in https://github.com/uatuko/grpcxx/pull/40
+
+**Full Changelog**: https://github.com/uatuko/grpcxx/compare/v0.4.0...v0.5.0
+
+
 ## v0.4.0 - 22nd September, 2024
 
 ### 🔦 Spotlight
