@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.5.1 - 28th October, 2024
+
+### What's Changed
+* Fix cmake configs by @tchernobog in https://github.com/uatuko/grpcxx/pull/41
+
+**Full Changelog**: https://github.com/uatuko/grpcxx/compare/v0.5.0...v0.5.1
+
+
 ## v0.5.0 - 27th October, 2024
 
 ### 🔦 Spotlight
