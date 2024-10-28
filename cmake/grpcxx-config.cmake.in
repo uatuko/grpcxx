@@ -4,12 +4,13 @@ include(${CMAKE_CURRENT_LIST_DIR}/grpcxx-version.cmake)
 
 if(NOT grpcxx::grpcxx)
     if(NOT @GRPCXX_HERMETIC_BUILD@)
+        include(CMakeFindDependencyMacro)
         if(NOT @GRPCXX_USE_ASIO@)
             find_dependency(libuv REQUIRED)
         endif()
         find_dependency(Protobuf @PROTOBUF_MINVERSION@ REQUIRED)
         find_dependency(fmt @FMT_MINVERSION@ REQUIRED)
     endif()
-    
+
     include(${CMAKE_CURRENT_LIST_DIR}/grpcxx-targets.cmake)
 endif()
