@@ -2,6 +2,7 @@
 
 #include "conn.h"
 #include "coroutine.h"
+#include "uv.h"
 
 #include <stdexcept>
 #include <string>
@@ -10,7 +11,6 @@ namespace grpcxx {
 namespace uv {
 server::server(std::size_t n) noexcept : _scheduler(_loop, n) {
 	uv_tcp_init(_loop, &_handle);
-	_handle.data = this;
 }
 
 detail::coroutine server::conn(uv_stream_t *stream) {
@@ -50,6 +50,13 @@ void server::run(std::string_view ip, int port) {
 		throw std::runtime_error(std::string("Failed to bind to tcp address: ") + uv_strerror(r));
 	}
 
+	run(std::move(_handle));
+}
+
+void server::run(uv_tcp_t &&handle) {
+	_handle      = std::move(handle);
+	_handle.data = this;
+
 	if (auto r = uv_listen(reinterpret_cast<uv_stream_t *>(&_handle), 128, conn_cb); r != 0) {
 		throw std::runtime_error(
 			std::string("Failed to listen for connections: ") + uv_strerror(r));
@@ -57,5 +64,6 @@ void server::run(std::string_view ip, int port) {
 
 	uv_run(_loop, UV_RUN_DEFAULT);
 }
+
 } // namespace uv
 } // namespace grpcxx

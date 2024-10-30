@@ -21,6 +21,7 @@ public:
 	server(const server &) = delete;
 	server(std::size_t n = std::thread::hardware_concurrency()) noexcept;
 
+	void run(uv_tcp_t &&handle);
 	void run(std::string_view ip, int port);
 
 private:

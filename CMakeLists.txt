@@ -36,6 +36,12 @@ endif()
 add_subdirectory(lib)
 add_subdirectory(src)
 
+if(BUILD_TESTING)
+    include(CTest)
+    enable_testing()
+    add_subdirectory(test)
+endif()
+
 # Installation steps to make find_package(grpcxx) work
 # in other projects.
 include(CMakePackageConfigHelpers)
