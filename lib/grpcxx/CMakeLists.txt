@@ -92,7 +92,16 @@ if (NOT GRPCXX_USE_ASIO)
 		PUBLIC
 			libuv::uv
 	)
-else()
+
+    # On Mac OS X, when libc++ is used with CLang,
+    # stop_token for some reason is still not stabilized.
+    # Therefore we enable experimental features.
+	target_compile_options(grpcxx
+        PUBLIC 
+            $<$<COMPILE_LANG_AND_ID:CXX,AppleClang,Clang>:-fexperimental-library>
+	)
+
+else() # ASIO version
 	target_link_libraries(grpcxx
 		PUBLIC
 			asio

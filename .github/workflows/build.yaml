@@ -39,7 +39,7 @@ jobs:
           apt-get update
           apt-get install -y --no-install-recommends \
             ${{ matrix.dependencies }} \
-            cmake ninja-build \
+            cmake ninja-build git ca-certificates \
             libprotobuf-dev libprotoc-dev protobuf-compiler
 
       - uses: actions/checkout@v4
@@ -53,21 +53,30 @@ jobs:
           cmake -B .build -G Ninja \
             -DCMAKE_CXX_COMPILER=${{ matrix.compiler }} \
             -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_TESTING=ON \
             ${{ matrix.cmake_args }}
       - name: Build
         run: |
           cmake --build .build --config Release
-
+      
+      - name: Test Project
+        uses: threeal/ctest-action@v1.1.0
+        with:
+          test-dir: .build
 
   macos:
-    runs-on: macos-13 # [Nov. 2023] `macos-latest` is pointing to `macos-12` which doesn't support coroutines.
+    runs-on: macos-15
     concurrency:
       group: ${{ github.workflow_ref }}-${{ github.job }}_${{ matrix.compiler }}-${{ matrix.variant }}
     strategy:
       fail-fast: false
       matrix:
         compiler:
-          - g++
+          # Right now, there is a bug in either libprotoc or GCC, which results in trying
+          # to link with undefined symbols. Unfortunately I don't have an ARM Mac to try.
+          # Compiling with clang (the default Mac OS X C++ compiler) should still prove
+          # a good degree of testing.
+          # - g++-14
           - clang++
         variant:
           - libuv
@@ -83,6 +92,7 @@ jobs:
           brew install \
             protobuf@3 \
             ninja \
+            git \
             ${{ matrix.dependencies }}
           brew link protobuf@3
 
@@ -94,10 +104,20 @@ jobs:
 
       - name: Configure CMake
         run: |
+          if [ ${{ matrix.compiler }} == "clang" ]; then
+            export PATH="$(brew --prefix llvm@18)/bin:${PATH}"; \
+          fi
+
           cmake -B .build -G Ninja \
             -DCMAKE_CXX_COMPILER=${{ matrix.compiler }} \
             -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_TESTING=ON \
             ${{ matrix.cmake_args }}
       - name: Build
         run: |
           cmake --build .build --config Release
+      
+      - name: Test
+        uses: threeal/ctest-action@v1.1.0
+        with:
+          test-dir: .build
