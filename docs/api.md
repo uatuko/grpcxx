@@ -19,6 +19,8 @@
     - [add](#add)
     - [listen (`asio`)](#listen-asio)
     - [run](#run)
+    - [prepare (`libuv`, protected)](#prepare)
+    - [process_pending (`libuv`, protected)](#process-pending)
   - [Example (`asio`)](#example-asio)
   - [Example (`libuv`)](#example-uv)
 - [`grpcxx::context`](#grpcxxcontext)
@@ -175,8 +177,11 @@ _awaitable_ must be passed on to an `io_context` executor to serve requests.
 Listen and serve incoming gRPC requests.
 
 1. Start listening on `ip` and `port` for incoming gRPC connections and serve requests.
-2. Same as (1), but accepting an optional stop token to asynchronously signal the server to exit
-3. Start listening on the provided file descriptor `fd`, which needs to be already bound to a network address. This is useful when the socket needs to have some additional properties set (such as keep-alive) and/or reused from the outside run context (such as is the case of the [systemd socket activation protocol](https://www.freedesktop.org/software/systemd/man/latest/sd_listen_fds.html#)).
+2. Same as (1), but accepting an optional stop token to asynchronously signal the server to exit.
+3. Start listening on the provided file descriptor `fd`, which needs to be already bound to a network 
+   address. This is useful when the socket needs to have some additional properties set (such as 
+   keep-alive) and/or reused from the outside run context (such as is the case of the 
+   [systemd socket activation protocol](https://www.freedesktop.org/software/systemd/man/latest/sd_listen_fds.html#)).
 
 > [!IMPORTANT]
 > If used with Asio, this will create and run an `io_context` executor on the main thread.
@@ -188,7 +193,7 @@ Listen and serve incoming gRPC requests.
 `void prepare(std::string_view ip, int port);` | (1) (`libuv`)
 `void prepare(int fd);`                        | (2) (`libuv`)
 
-This is a lower-level API to be used in conjunction with (`process_pending()`[#process_pending]). It allows to prepare execution of the loop separately from running one iteration of the loop, which is desirable when integrating a `server` with an external event loop, such as another one provided by `libuv`, or similar (e.g. `libevent`).
+This is a low-level API to be used in conjunction with (`process_pending()`[#process_pending]). It allows to prepare execution of the loop separately from running one iteration of the loop, which is desirable when integrating a `server` with an external event loop, such as another one provided by `libuv`, or similar (e.g. `libevent`).
 
 The method is marked as `protected` as this is not the normal use case; please subclass `server` to get access to it.
 
@@ -196,9 +201,11 @@ The method is marked as `protected` as this is not the normal use case; please s
 
 |||
 ------------------------- | ---
-`void process_pending();` | (1) (`libuv`)
+`bool process_pending();` | (1) (`libuv`)
 
-This is a lower-level API to be used in conjunction with (`prepare()`[#prepare]). It allows to execute a single non-blocking iteration of the internal `libuv` loop, which is desirable when integrating a `server` with an external event loop, such as another one provided by `libuv`, or similar (e.g. `libevent`).
+This is a low-level API to be used in conjunction with (`prepare()`[#prepare]). It allows to execute a single non-blocking iteration of the internal `libuv` loop, which is desirable when integrating a `server` with an external event loop, such as another one provided by `libuv`, or similar (e.g. `libevent`).
+
+It will return `true` if there are still active operations that might become ready in the future, `false` otherwise.
 
 Differing from [run()](#run), no stop token can be passed, as only pending events are processed, without waiting.
 
