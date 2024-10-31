@@ -102,3 +102,39 @@ jobs:
       - name: Build
         run: |
           cmake --build .build --config Release
+
+  windows:
+    # Windows builds are broken at the moment, disable until they are fixed
+    if: false
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        variant:
+          - libuv
+          - asio
+        include:
+          - variant: asio
+            cmake_args: -DGRPCXX_USE_ASIO=ON
+
+    steps:
+      - uses: actions/cache@v4
+        with:
+          path: C:\vcpkg\packages
+          key: ${{ runner.arch }}_${{ runner.os }}-vcpkg-20241101
+      - name: Install dependencies
+        run: |
+          choco install ninja
+          vcpkg install protobuf
+      - uses: actions/checkout@v4
+      - name: Configure CMake
+        run: |
+          cmake -B .build -G Ninja `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DGRPCXX_BUILD_EXAMPLES=OFF `
+            -DGRPCXX_BUILD_EXPERIMENTS=OFF `
+            -DGRPCXX_BUILD_TESTING=OFF `
+            -DProtobuf_ROOT=C:\vcpkg\packages\protobuf_x64-windows `
+            ${{ matrix.cmake_args }}
+      - name: Build
+        run: cmake --build .build --config Release
