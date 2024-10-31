@@ -20,3 +20,49 @@ jobs:
 
       - uses: actions/checkout@v4
       - run: make lint:ci
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow_ref }}-${{ github.job }}_${{ matrix.container }}-${{ matrix.compiler }}-${{ matrix.variant }}
+    container: ${{ matrix.container }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler:
+          - g++
+        container:
+          - ubuntu:24.04
+        variant:
+          - libuv
+          - asio
+        include:
+          - compiler: g++
+            dependencies: g++
+          - variant: asio
+            cmake_args: -DGRPCXX_USE_ASIO=ON
+
+    steps:
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            ${{ matrix.dependencies }} \
+            cmake ninja-build \
+            libprotobuf-dev libprotoc-dev protobuf-compiler
+      - uses: actions/checkout@v4
+      - name: Configure CMake
+        run: |
+          cmake -B .build -G Ninja \
+            -DCMAKE_CXX_COMPILER=${{ matrix.compiler }} \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DGRPCXX_BUILD_EXAMPLES=OFF \
+            -DGRPCXX_BUILD_EXPERIMENTS=OFF
+            -DBUILD_TESTING=ON \
+            ${{ matrix.cmake_args }}
+      - name: Build
+        run: cmake --build .build
+      - name: Test
+        run: ctest --test-dir .build --output-on-failure
