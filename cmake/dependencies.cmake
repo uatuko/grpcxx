@@ -107,7 +107,7 @@ else()
     set(ENABLE_SHARED_LIB OFF CACHE BOOL "Build libnghttp2 as a shared library")
     set(ENABLE_DOC        OFF CACHE BOOL "Build libnghttp2 documentation")
     FetchContent_MakeAvailable(nghttp2)
-    
+
     target_include_directories(nghttp2_static
         PUBLIC
             $<BUILD_INTERFACE:${nghttp2_SOURCE_DIR}/lib/includes>
@@ -131,7 +131,7 @@ else()
     FetchContent_MakeAvailable(fmt)
 endif()
 
-if(BUILD_TESTING)
+if(GRPCXX_BUILD_TESTING)
     if(NOT GRPCXX_HERMETIC_BUILD)
         find_package(GTest REQUIRED)
     else()

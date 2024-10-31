@@ -23,6 +23,11 @@ cmake_dependent_option(GRPCXX_BUILD_EXPERIMENTS
 	"NOT GRPCXX_USE_ASIO; CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR" OFF
 )
 
+cmake_dependent_option(GRPCXX_BUILD_TESTING
+	"Build tests when this is the root project" ON
+	"CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR" OFF
+)
+
 include(cmake/dependencies.cmake)
 
 if (GRPCXX_BUILD_EXAMPLES)
@@ -36,7 +41,7 @@ endif()
 add_subdirectory(lib)
 add_subdirectory(src)
 
-if(BUILD_TESTING)
+if(GRPCXX_BUILD_TESTING)
     include(CTest)
     enable_testing()
     add_subdirectory(test)

@@ -53,6 +53,7 @@ jobs:
           cmake -B .build -G Ninja \
             -DCMAKE_CXX_COMPILER=${{ matrix.compiler }} \
             -DCMAKE_BUILD_TYPE=Release \
+            -DGRPCXX_BUILD_TESTING=OFF \
             ${{ matrix.cmake_args }}
       - name: Build
         run: |
@@ -96,6 +97,7 @@ jobs:
           cmake -B .build -G Ninja \
             -DCMAKE_CXX_COMPILER=${{ matrix.compiler }} \
             -DCMAKE_BUILD_TYPE=Release \
+            -DGRPCXX_BUILD_TESTING=OFF \
             ${{ matrix.cmake_args }}
       - name: Build
         run: |
