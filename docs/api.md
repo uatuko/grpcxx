@@ -186,33 +186,6 @@ Listen and serve incoming gRPC requests.
 > [!IMPORTANT]
 > If used with Asio, this will create and run an `io_context` executor on the main thread.
 
-#### prepare (`libuv`, protected)
-
-|||
----------------------------------------------- | ---
-`void prepare(std::string_view ip, int port);` | (1) (`libuv`)
-`void prepare(int fd);`                        | (2) (`libuv`)
-
-This is a low-level API to be used in conjunction with (`process_pending()`[#process_pending]). It allows to prepare execution of the loop separately from running one iteration of the loop, which is desirable when integrating a `server` with an external event loop, such as another one provided by `libuv`, or similar (e.g. `libevent`).
-
-The method is marked as `protected` as this is not the normal use case; please subclass `server` to get access to it.
-
-#### process_pending (`libuv`, protected)
-
-|||
-------------------------- | ---
-`bool process_pending();` | (1) (`libuv`)
-
-This is a low-level API to be used in conjunction with (`prepare()`[#prepare]). It allows to execute a single non-blocking iteration of the internal `libuv` loop, which is desirable when integrating a `server` with an external event loop, such as another one provided by `libuv`, or similar (e.g. `libevent`).
-
-It will return `true` if there are still active operations that might become ready in the future, `false` otherwise.
-
-Differing from [run()](#run), no stop token can be passed, as only pending events are processed, without waiting.
-
-The method is marked as `protected` as this is not the normal use case; please subclass `server` to get access to it.
-
-Please note that it is the programmer's responsibility to ensure a call to `prepare()` precedes a call to `process_pending()`.
-
 ### Example (`asio`)
 
 ```cpp
