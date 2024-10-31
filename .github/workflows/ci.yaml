@@ -7,7 +7,6 @@ on:
 
 jobs:
   lint:
-    name: Lint
     runs-on: ubuntu-latest
     container: ubuntu:24.04
 
