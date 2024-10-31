@@ -2,8 +2,13 @@
 
 #include "conn.h"
 #include "coroutine.h"
+#include "uv.h"
+
+#include <netinet/in.h>
+#include <sys/socket.h>
 
 #include <stdexcept>
+#include <stop_token>
 #include <string>
 
 namespace grpcxx {
@@ -11,6 +16,12 @@ namespace uv {
 server::server(std::size_t n) noexcept : _scheduler(_loop, n) {
 	uv_tcp_init(_loop, &_handle);
 	_handle.data = this;
+}
+
+server::~server() noexcept {
+	if (uv_loop_alive(_loop)) {
+		uv_stop(_loop);
+	}
 }
 
 detail::coroutine server::conn(uv_stream_t *stream) {
@@ -42,20 +53,98 @@ void server::conn_cb(uv_stream_t *stream, int status) {
 	s->conn(stream);
 }
 
-void server::run(std::string_view ip, int port) {
-	struct sockaddr_in addr;
-	uv_ip4_addr(ip.data(), port, &addr);
+void server::prepare(std::string_view ip, int port) {
+	sockaddr_storage addr;
+	if (uv_ip4_addr(ip.data(), port, reinterpret_cast<sockaddr_in *>(&addr)) != 0 &&
+		uv_ip6_addr(ip.data(), port, reinterpret_cast<sockaddr_in6 *>(&addr)) != 0) {
+		throw std::runtime_error(std::string(ip) + " is not a valid IPv4 or IPv6 address");
+	}
 
 	if (auto r = uv_tcp_bind(&_handle, reinterpret_cast<const sockaddr *>(&addr), 0); r != 0) {
 		throw std::runtime_error(std::string("Failed to bind to tcp address: ") + uv_strerror(r));
 	}
 
-	if (auto r = uv_listen(reinterpret_cast<uv_stream_t *>(&_handle), 128, conn_cb); r != 0) {
+	start_listening();
+}
+
+void server::prepare(int fd) {
+	struct sockaddr_in addr;
+	socklen_t          addr_len = sizeof(addr);
+	if (auto r = uv_tcp_open(&_handle, fd);
+		r != 0 || getsockname(fd, (struct sockaddr *)&addr, &addr_len) != 0) {
+
+		throw std::runtime_error(
+			std::string("Provided fd ") + std::to_string(fd) +
+			" is not a bound network socket: " + uv_strerror(r));
+	}
+
+	start_listening();
+}
+
+void server::start_listening() {
+	if (auto r = uv_listen(reinterpret_cast<uv_stream_t *>(&_handle), TCP_LISTEN_BACKLOG, conn_cb);
+		r != 0) {
 		throw std::runtime_error(
 			std::string("Failed to listen for connections: ") + uv_strerror(r));
 	}
+}
 
+void server::run(std::string_view ip, int port, std::stop_token stop_token) {
+	prepare(std::move(ip), port);
+	setup_stop_timer(std::move(stop_token));
 	uv_run(_loop, UV_RUN_DEFAULT);
 }
+
+void server::run(int fd, std::stop_token stop_token) {
+	prepare(fd);
+	setup_stop_timer(std::move(stop_token));
+	uv_run(_loop, UV_RUN_DEFAULT);
+}
+
+void server::setup_stop_timer(std::stop_token stop_token) noexcept {
+	// See https://docs.libuv.org/en/v1.x/guide/eventloops.html#stopping-an-event-loop
+	// for a rationale around the shutdown timer.
+
+	_stop_token = std::move(stop_token);
+	uv_timer_init(_loop, &_check_stop_timer);
+	_check_stop_timer.data = &_stop_token;
+	uv_timer_start(
+		&_check_stop_timer,
+		[](uv_timer_t *handle) {
+			const auto stop_token = static_cast<const std::stop_token *>(handle->data);
+			if (stop_token->stop_requested()) {
+				uv_timer_stop(handle);
+				uv_stop(handle->loop);
+			}
+		},
+		SHUTDOWN_CHECK_INTERVAL_MS,
+		SHUTDOWN_CHECK_INTERVAL_MS);
+}
+
+bool server::process_pending() {
+	return static_cast<bool>(uv_run(_loop, UV_RUN_NOWAIT));
+}
+
+server::loop_t::loop_t() {
+	uv_loop_init(&_loop);
+}
+
+server::loop_t::~loop_t() noexcept {
+	// Ensures all remaining handles are cleaned up (but without any
+	// special close callback)
+	uv_walk(
+		&_loop,
+		[](uv_handle_t *handle, void *) {
+			if (!uv_is_closing(handle)) {
+				uv_close(handle, nullptr);
+			}
+		},
+		nullptr);
+
+	while (uv_loop_close(&_loop) == UV_EBUSY) {
+		uv_run(&_loop, UV_RUN_ONCE);
+	}
+}
+
 } // namespace uv
 } // namespace grpcxx

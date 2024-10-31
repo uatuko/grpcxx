@@ -46,7 +46,7 @@ public:
 	using handler_t  = std::function<response_t(context &, std::string_view)>;
 	using handlers_t = std::unordered_map<std::string_view, handler_t>;
 
-	template <typename I> constexpr service(I &impl) {
+	template <typename I> constexpr explicit service(I &impl) {
 		std::apply(
 			[&](auto &&...args) {
 				auto helper = [&](const auto &rpc) {
