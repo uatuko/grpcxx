@@ -48,7 +48,10 @@ bool Grpcxx::Generate(
 		output       += fmt::format("namespace {} {{\n", service->name());
 
 		std::string tmp = fmt::format(
-			"using Service = grpcxx::service<\"{}.{}\"", file->package(), service->name());
+			"using Service = grpcxx::service<\"{}{}{}\"",
+			file->package(),
+			file->package().empty() ? "" : ".",
+			service->name());
 
 		for (int j = 0; j < service->method_count(); j++) {
 			auto method = service->method(j);
@@ -57,7 +60,7 @@ bool Grpcxx::Generate(
 			// e.g. `google.protobuf.Empty` -> `google::protobuf::Empty`
 			auto mapper = [&file](const google::protobuf::Descriptor *t) -> std::string {
 				auto name = t->full_name();
-				if (name.starts_with(file->package())) {
+				if (!file->package().empty() && name.starts_with(file->package())) {
 					name = name.substr(file->package().size() + 1);
 				}
 

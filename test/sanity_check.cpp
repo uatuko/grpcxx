@@ -2,7 +2,7 @@
 
 namespace /* anonymous */ {
 
-TEST(SanityCheck, GTestWorks) {
+TEST(SanityCheck, googletest_works) {
 	// Trivial assertion to verify the
 	// test harness works.
 	ASSERT_TRUE(true);
