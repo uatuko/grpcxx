@@ -22,7 +22,6 @@ jobs:
       - run: make lint:ci
 
   test:
-    name: Test
     runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow_ref }}-${{ github.job }}_${{ matrix.container }}-${{ matrix.compiler }}-${{ matrix.variant }}
@@ -59,7 +58,7 @@ jobs:
             -DCMAKE_CXX_COMPILER=${{ matrix.compiler }} \
             -DCMAKE_BUILD_TYPE=Release \
             -DGRPCXX_BUILD_EXAMPLES=OFF \
-            -DGRPCXX_BUILD_EXPERIMENTS=OFF
+            -DGRPCXX_BUILD_EXPERIMENTS=OFF \
             -DBUILD_TESTING=ON \
             ${{ matrix.cmake_args }}
       - name: Build
