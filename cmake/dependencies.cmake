@@ -135,15 +135,9 @@ if(BUILD_TESTING)
     if(NOT GRPCXX_HERMETIC_BUILD)
         find_package(GTest REQUIRED)
     else()
-        # Google Test
-        # 
-        # We follow https://github.com/google/googletest?tab=readme-ov-file#live-at-head
-        # as per upstream recommendations and pick up the main branch without hash.
-        #
         FetchContent_Declare(googletest
-            GIT_REPOSITORY https://github.com/google/googletest.git
-            GIT_SHALLOW TRUE
-            GIT_TAG main
+            URL      https://github.com/google/googletest/archive/refs/tags/v1.15.2.tar.gz
+            URL_HASH SHA256=7b42b4d6ed48810c5362c265a17faebe90dc2373c885e5216439d37927f02926
             FIND_PACKAGE_ARGS NAMES GTest
         )
         FetchContent_MakeAvailable(googletest)
