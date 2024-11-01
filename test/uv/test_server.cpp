@@ -1,5 +1,4 @@
 #include "grpcxx/uv/server.h"
-
 #include "gtest/gtest.h"
 
 #include "ping_pong.grpcxx.pb.h"
@@ -79,47 +78,43 @@ TEST(UvServer, run_with_existing_fd_and_stop) {
 	// a client. So far this was tested manually via Postman.
 }
 
-TEST(UvServer, run_in_nested_loop) {
+TEST(UvServer, run_with_external_loop) {
+	// Integration with other event loops, such as the one of libevent,
+	// is possible. Here we just pass a pre-built uv_loop_t
+	// which can be easily reused inside a different event loop.
+	uv_loop_t uv_loop;
+	uv_loop_init(&uv_loop);
+
 	class server : public ::grpcxx::uv::server {
 	public:
-		server() : ::grpcxx::uv::server{1} { prepare("127.0.0.1", 0); }
-
-		void process_pending() { ::grpcxx::uv::server::process_pending(); }
+		server(uv_loop_t &loop) : ::grpcxx::uv::server{loop, 1} { prepare("127.0.0.1", 0); }
 	};
 
-	server                server;
+	server                server{uv_loop};
 	PingPong::ServiceImpl ping_pong;
 	PingPong::Service     service{ping_pong};
 	server.add(service);
 
-	// Integration with other event loops, such as the one of libevent,
-	// is possible. Here we just nest uv loops to avoid introducing
-	// additional dependencies and show how this can be achieved without
-	// the need of moving the server to additional threads.
-	uv_loop_t outer_loop;
-	uv_loop_init(&outer_loop);
-
-	uv_timer_t inner_loop_timer;
-	uv_timer_init(&outer_loop, &inner_loop_timer);
-	inner_loop_timer.data = &server;
-	uv_timer_start(
-		&inner_loop_timer,
-		[](uv_timer_t *handle) {
-			auto server = static_cast<class server *>(handle->data);
-			server->process_pending();
-		},
-		0,
-		0);
-	uv_run(&outer_loop, UV_RUN_DEFAULT);
-
 	// TODO: we should do an exchange here, as soon as grpcxx also provides
-	// a client. So far this was tested manually via Postman (with a non-zero
-	// repeat value for the timer).
+	// a client. So far this was tested manually via Postman
+	// (and UV_RUN_DEFAULT / UV_RUN_ONCE).
 
-	// Cleanup
-	uv_close(reinterpret_cast<uv_handle_t *>(&inner_loop_timer), nullptr);
-	uv_run(&outer_loop, UV_RUN_DEFAULT);
-	uv_loop_close(&outer_loop);
+	// Here we manually run the loop
+	uv_run(&uv_loop, UV_RUN_NOWAIT);
+
+	// Standard cleanup procedure for libuv
+	uv_walk(
+		&uv_loop,
+		[](uv_handle_t *handle, void *) {
+			if (!uv_is_closing(handle)) {
+				uv_close(handle, nullptr);
+			}
+		},
+		nullptr);
+
+	while (uv_loop_close(&uv_loop) == UV_EBUSY) {
+		uv_run(&uv_loop, UV_RUN_ONCE);
+	}
 }
 
 } // namespace

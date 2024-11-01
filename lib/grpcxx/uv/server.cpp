@@ -13,7 +13,12 @@
 
 namespace grpcxx {
 namespace uv {
-server::server(std::size_t n) noexcept : _scheduler(_loop, n) {
+server::server(std::size_t n) noexcept : _loop{}, _scheduler{_loop, n} {
+	uv_tcp_init(_loop, &_handle);
+	_handle.data = this;
+}
+
+server::server(uv_loop_t &loop, std::size_t n) noexcept : _loop{loop}, _scheduler{_loop, n} {
 	uv_tcp_init(_loop, &_handle);
 	_handle.data = this;
 }
@@ -107,43 +112,21 @@ void server::setup_stop_timer(std::stop_token stop_token) noexcept {
 
 	_stop_token = std::move(stop_token);
 	uv_timer_init(_loop, &_check_stop_timer);
-	_check_stop_timer.data = &_stop_token;
+	_check_stop_timer.data = this;
 	uv_timer_start(
 		&_check_stop_timer,
 		[](uv_timer_t *handle) {
-			const auto stop_token = static_cast<const std::stop_token *>(handle->data);
-			if (stop_token->stop_requested()) {
+			auto &self = *static_cast<server *>(handle->data);
+			if (self._stop_token.stop_requested()) {
 				uv_timer_stop(handle);
-				uv_stop(handle->loop);
+				uv_close(reinterpret_cast<uv_handle_t *>(&self._handle), nullptr);
+				if (self._loop.is_managed()) {
+					uv_stop(handle->loop);
+				}
 			}
 		},
 		SHUTDOWN_CHECK_INTERVAL_MS,
 		SHUTDOWN_CHECK_INTERVAL_MS);
-}
-
-bool server::process_pending() {
-	return static_cast<bool>(uv_run(_loop, UV_RUN_NOWAIT));
-}
-
-server::loop_t::loop_t() {
-	uv_loop_init(&_loop);
-}
-
-server::loop_t::~loop_t() noexcept {
-	// Ensures all remaining handles are cleaned up (but without any
-	// special close callback)
-	uv_walk(
-		&_loop,
-		[](uv_handle_t *handle, void *) {
-			if (!uv_is_closing(handle)) {
-				uv_close(handle, nullptr);
-			}
-		},
-		nullptr);
-
-	while (uv_loop_close(&_loop) == UV_EBUSY) {
-		uv_run(&_loop, UV_RUN_ONCE);
-	}
 }
 
 } // namespace uv
