@@ -24,8 +24,8 @@ cmake_dependent_option(GRPCXX_BUILD_EXPERIMENTS
 )
 
 cmake_dependent_option(GRPCXX_BUILD_TESTING
-	"Build tests when this is the root project" ON
-	"CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR" OFF
+	"Build tests when BUILD_TESTING flag is set and this is the root project" ON
+	"BUILD_TESTING; CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR" OFF
 )
 
 include(cmake/dependencies.cmake)
