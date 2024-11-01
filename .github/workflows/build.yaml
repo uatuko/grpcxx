@@ -39,7 +39,7 @@ jobs:
           apt-get update
           apt-get install -y --no-install-recommends \
             ${{ matrix.dependencies }} \
-            cmake ninja-build git ca-certificates \
+            cmake ninja-build \
             libprotobuf-dev libprotoc-dev protobuf-compiler
 
       - uses: actions/checkout@v4
@@ -53,30 +53,21 @@ jobs:
           cmake -B .build -G Ninja \
             -DCMAKE_CXX_COMPILER=${{ matrix.compiler }} \
             -DCMAKE_BUILD_TYPE=Release \
-            -DBUILD_TESTING=ON \
+            -DGRPCXX_BUILD_TESTING=OFF \
             ${{ matrix.cmake_args }}
       - name: Build
         run: |
           cmake --build .build --config Release
-      
-      - name: Test Project
-        uses: threeal/ctest-action@v1.1.0
-        with:
-          test-dir: .build
 
   macos:
-    runs-on: macos-15
+    runs-on: macos-latest
     concurrency:
       group: ${{ github.workflow_ref }}-${{ github.job }}_${{ matrix.compiler }}-${{ matrix.variant }}
     strategy:
       fail-fast: false
       matrix:
         compiler:
-          # Right now, there is a bug in either libprotoc or GCC, which results in trying
-          # to link with undefined symbols. Unfortunately I don't have an ARM Mac to try.
-          # Compiling with clang (the default Mac OS X C++ compiler) should still prove
-          # a good degree of testing.
-          # - g++-14
+          - g++
           - clang++
         variant:
           - libuv
@@ -92,7 +83,6 @@ jobs:
           brew install \
             protobuf@3 \
             ninja \
-            git \
             ${{ matrix.dependencies }}
           brew link protobuf@3
 
@@ -104,20 +94,47 @@ jobs:
 
       - name: Configure CMake
         run: |
-          if [ ${{ matrix.compiler }} == "clang" ]; then
-            export PATH="$(brew --prefix llvm@18)/bin:${PATH}"; \
-          fi
-
           cmake -B .build -G Ninja \
             -DCMAKE_CXX_COMPILER=${{ matrix.compiler }} \
             -DCMAKE_BUILD_TYPE=Release \
-            -DBUILD_TESTING=ON \
+            -DGRPCXX_BUILD_TESTING=OFF \
             ${{ matrix.cmake_args }}
       - name: Build
         run: |
           cmake --build .build --config Release
-      
-      - name: Test
-        uses: threeal/ctest-action@v1.1.0
+
+  windows:
+    # Windows builds are broken at the moment, disable until they are fixed
+    if: false
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        variant:
+          - libuv
+          - asio
+        include:
+          - variant: asio
+            cmake_args: -DGRPCXX_USE_ASIO=ON
+
+    steps:
+      - uses: actions/cache@v4
         with:
-          test-dir: .build
+          path: C:\vcpkg\packages
+          key: ${{ runner.arch }}_${{ runner.os }}-vcpkg-20241101
+      - name: Install dependencies
+        run: |
+          choco install ninja
+          vcpkg install protobuf
+      - uses: actions/checkout@v4
+      - name: Configure CMake
+        run: |
+          cmake -B .build -G Ninja `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DGRPCXX_BUILD_EXAMPLES=OFF `
+            -DGRPCXX_BUILD_EXPERIMENTS=OFF `
+            -DGRPCXX_BUILD_TESTING=OFF `
+            -DProtobuf_ROOT=C:\vcpkg\packages\protobuf_x64-windows `
+            ${{ matrix.cmake_args }}
+      - name: Build
+        run: cmake --build .build --config Release

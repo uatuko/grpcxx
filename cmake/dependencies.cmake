@@ -5,6 +5,7 @@ set(BOOST_MINVERSION 1.81)
 set(NGHTTP2_MINVERSION 1.55.1)
 set(PROTOBUF_MINVERSION 3.15.0)
 set(FMT_MINVERSION 10.1.1)
+set(GTEST_MINVERSION 1.15.2)
 
 if(NOT GRPCXX_USE_ASIO)
     if(GRPCXX_HERMETIC_BUILD)
@@ -107,7 +108,7 @@ else()
     set(ENABLE_SHARED_LIB OFF CACHE BOOL "Build libnghttp2 as a shared library")
     set(ENABLE_DOC        OFF CACHE BOOL "Build libnghttp2 documentation")
     FetchContent_MakeAvailable(nghttp2)
-    
+
     target_include_directories(nghttp2_static
         PUBLIC
             $<BUILD_INTERFACE:${nghttp2_SOURCE_DIR}/lib/includes>
@@ -131,19 +132,13 @@ else()
     FetchContent_MakeAvailable(fmt)
 endif()
 
-if(BUILD_TESTING)
+if(GRPCXX_BUILD_TESTING)
     if(NOT GRPCXX_HERMETIC_BUILD)
-        find_package(GTest REQUIRED)
+        find_package(GTest ${GTEST_MINVERSION} REQUIRED)
     else()
-        # Google Test
-        # 
-        # We follow https://github.com/google/googletest?tab=readme-ov-file#live-at-head
-        # as per upstream recommendations and pick up the main branch without hash.
-        #
         FetchContent_Declare(googletest
-            GIT_REPOSITORY https://github.com/google/googletest.git
-            GIT_SHALLOW TRUE
-            GIT_TAG main
+            URL      https://github.com/google/googletest/archive/refs/tags/v${GTEST_MINVERSION}.tar.gz
+            URL_HASH SHA256=7b42b4d6ed48810c5362c265a17faebe90dc2373c885e5216439d37927f02926
             FIND_PACKAGE_ARGS NAMES GTest
         )
         FetchContent_MakeAvailable(googletest)
