@@ -3,7 +3,7 @@ include(GoogleTest)
 add_executable(grpcxx-unit-tests)
 target_sources(grpcxx-unit-tests
     PRIVATE
-        sanity_check.cpp
+        test_sanity_check.cpp
 )
 
 set(proto_files
@@ -46,7 +46,7 @@ if(NOT GRPCXX_USE_ASIO)
     # libuv-related test sources
     target_sources(grpcxx-unit-tests
         PRIVATE
-            uv/server.cpp
+            uv/test_server.cpp
     )
 endif()
 

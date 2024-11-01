@@ -19,8 +19,6 @@
     - [add](#add)
     - [listen (`asio`)](#listen-asio)
     - [run](#run)
-    - [prepare (`libuv`, protected)](#prepare)
-    - [process_pending (`libuv`, protected)](#process-pending)
   - [Example (`asio`)](#example-asio)
   - [Example (`libuv`)](#example-uv)
 - [`grpcxx::context`](#grpcxxcontext)

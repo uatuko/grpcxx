@@ -34,6 +34,7 @@ if (NOT GRPCXX_USE_ASIO)
 	target_sources(grpcxx
 		PRIVATE
 			uv/conn.cpp
+			uv/loop.cpp
 			uv/reader.cpp
 			uv/scheduler.cpp
 			uv/server.cpp
@@ -42,6 +43,7 @@ if (NOT GRPCXX_USE_ASIO)
 			FILE_SET headers TYPE HEADERS
 			BASE_DIRS ..
 			FILES
+				uv/loop.h
 				uv/server.h
 				uv/scheduler.h
 				uv/task.h
