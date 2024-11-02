@@ -2,10 +2,6 @@
 
 #include "conn.h"
 #include "coroutine.h"
-#include "uv.h"
-
-#include <netinet/in.h>
-#include <sys/socket.h>
 
 #include <stdexcept>
 #include <stop_token>
@@ -72,15 +68,10 @@ void server::prepare(std::string_view ip, int port) {
 	start_listening();
 }
 
-void server::prepare(int fd) {
-	struct sockaddr_in addr;
-	socklen_t          addr_len = sizeof(addr);
-	if (auto r = uv_tcp_open(&_handle, fd);
-		r != 0 || getsockname(fd, (struct sockaddr *)&addr, &addr_len) != 0) {
-
+void server::prepare(uv_os_sock_t sock) {
+	if (auto r = uv_tcp_open(&_handle, sock); r != 0) {
 		throw std::runtime_error(
-			std::string("Provided fd ") + std::to_string(fd) +
-			" is not a bound network socket: " + uv_strerror(r));
+			std::string("Failed to open socket as a tcp handle:") + uv_strerror(r));
 	}
 
 	start_listening();
@@ -100,8 +91,8 @@ void server::run(std::string_view ip, int port, std::stop_token stop_token) {
 	uv_run(_loop, UV_RUN_DEFAULT);
 }
 
-void server::run(int fd, std::stop_token stop_token) {
-	prepare(fd);
+void server::run(uv_os_sock_t sock, std::stop_token stop_token) {
+	prepare(sock);
 	setup_stop_timer(std::move(stop_token));
 	uv_run(_loop, UV_RUN_DEFAULT);
 }
