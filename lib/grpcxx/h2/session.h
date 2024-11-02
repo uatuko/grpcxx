@@ -38,7 +38,7 @@ private:
 		nghttp2_session *session, const nghttp2_frame *frame, const uint8_t *name, size_t namelen,
 		const uint8_t *value, size_t valuelen, uint8_t flags, void *vsess);
 
-	static ssize_t read_cb(
+	static nghttp2_ssize read_cb(
 		nghttp2_session *session, int32_t stream_id, uint8_t *buf, size_t length,
 		uint32_t *data_flags, nghttp2_data_source *source, void *);
 
