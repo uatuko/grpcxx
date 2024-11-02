@@ -104,37 +104,56 @@ jobs:
           cmake --build .build --config Release
 
   windows:
-    # Windows builds are broken at the moment, disable until they are fixed
-    if: false
     runs-on: windows-latest
     strategy:
       fail-fast: false
       matrix:
+        compiler:
+          - cl
         variant:
-          - libuv
+          # [Nov. 2024] msvc throws C2894 errors when using libuv, need to investigate why
+          # - libuv
           - asio
         include:
           - variant: asio
             cmake_args: -DGRPCXX_USE_ASIO=ON
 
     steps:
-      - uses: actions/cache@v4
+      - uses: actions/cache/restore@v4
+        id: cache-restore-vcpkg
         with:
           path: C:\vcpkg\packages
           key: ${{ runner.arch }}_${{ runner.os }}-vcpkg-20241101
-      - name: Install dependencies
-        run: |
-          choco install ninja
-          vcpkg install protobuf
+
+      - name: Install dependencies (choco)
+        run: choco install ninja
+      - name: Install dependencies (vcpkg)
+        if: steps.cache-restore-vcpkg.outputs.cache-hit != 'true'
+        run: vcpkg install protobuf
+
+      # Always save vcpkg cache if vcpkg install is successful
+      - uses: actions/cache/save@v4
+        if: always() && steps.cache-restore-vcpkg.outputs.cache-hit != 'true'
+        id: cache-save-vcpkg
+        with:
+          path: C:\vcpkg\packages
+          key: ${{ steps.cache-restore-vcpkg.outputs.cache-primary-key }}
+
+      # It's not straight forward to setup dev commant prompt to use across steps. Have to find the location and execute
+      # `vcvarsall.bat ${{ runner.arch }}` and "export" env vars set by vcvarsall.bat.
+      - uses: ilammy/msvc-dev-cmd@v1
+
       - uses: actions/checkout@v4
       - name: Configure CMake
         run: |
           cmake -B .build -G Ninja `
+            -DCMAKE_CXX_COMPILER=${{ matrix.compiler }} `
             -DCMAKE_BUILD_TYPE=Release `
             -DGRPCXX_BUILD_EXAMPLES=OFF `
             -DGRPCXX_BUILD_EXPERIMENTS=OFF `
             -DGRPCXX_BUILD_TESTING=OFF `
             -DProtobuf_ROOT=C:\vcpkg\packages\protobuf_x64-windows `
+            -DCMAKE_CXX_FLAGS="-DNGHTTP2_NO_SSIZE_T -IC:\vcpkg\packages\abseil_x64-windows\include" `
             ${{ matrix.cmake_args }}
       - name: Build
         run: cmake --build .build --config Release
