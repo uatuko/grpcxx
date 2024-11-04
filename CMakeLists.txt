@@ -9,6 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 
+option(BUILD_SHARED_LIBS "Build grpcxx as a shared library" ON)
 option(GRPCXX_HERMETIC_BUILD "Fetch and build all dependencies instead of relying on system libraries" ON)
 option(GRPCXX_USE_ASIO "Use asio instead of libuv for I/O and event loop" OFF)
 
@@ -19,13 +20,13 @@ cmake_dependent_option(GRPCXX_BUILD_EXAMPLES
 )
 
 cmake_dependent_option(GRPCXX_BUILD_EXPERIMENTS
-	"Build experiments when this is the root project" ON
+	"Build experiments when this is the root project and not using asio" ON
 	"NOT GRPCXX_USE_ASIO; CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR" OFF
 )
 
 cmake_dependent_option(GRPCXX_BUILD_TESTING
-	"Build tests when BUILD_TESTING flag is set and this is the root project" ON
-	"BUILD_TESTING; CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR" OFF
+	"Build tests when BUILD_TESTING flag is set or this is the root project" ON
+	"BUILD_TESTING OR CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR" OFF
 )
 
 include(cmake/dependencies.cmake)

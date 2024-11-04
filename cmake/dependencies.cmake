@@ -15,10 +15,16 @@ if(NOT GRPCXX_USE_ASIO)
             URL_HASH SHA256=7aa66be3413ae10605e1f5c9ae934504ffe317ef68ea16fdaa83e23905c681bd
         )
 
-        set(LIBUV_BUILD_SHARED OFF CACHE BOOL "Build libuv shared lib")
+        set(LIBUV_BUILD_SHARED ${BUILD_SHARED_LIBS} CACHE BOOL "Build libuv shared lib")
         FetchContent_MakeAvailable(libuv)
-        install(TARGETS uv_a EXPORT grpcxx COMPONENT Development)
-        add_library(libuv::uv ALIAS uv_a)
+
+        if (BUILD_SHARED_LIBS)
+            install(TARGETS uv EXPORT grpcxx COMPONENT Development)
+            add_library(libuv::uv ALIAS uv)
+        else()
+            install(TARGETS uv_a EXPORT grpcxx COMPONENT Development)
+            add_library(libuv::uv ALIAS uv_a)
+        endif()
     else()
         # Unfortunately the libuv CMakeLists.txt does not export
         # a version file. This is a bug in libuv.
@@ -103,14 +109,20 @@ else()
         URL_HASH SHA256=88bb94c9e4fd1c499967f83dece36a78122af7d5fb40da2019c56b9ccc6eb9dd
     )
 
+    if (NOT BUILD_SHARED_LIBS)
+        set(BUILD_STATIC_LIBS ON CACHE BOOL "Build libnghttp2 in static mode")
+    endif()
     set(ENABLE_LIB_ONLY   ON  CACHE BOOL "Build libnghttp2 only")
-    set(BUILD_STATIC_LIBS ON  CACHE BOOL "Build libnghttp2 in static mode")
-    set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build libnghttp2 as a shared library")
     set(ENABLE_DOC        OFF CACHE BOOL "Build libnghttp2 documentation")
     FetchContent_MakeAvailable(nghttp2)
 
-    install(TARGETS nghttp2_static EXPORT grpcxx COMPONENT Development)
-    add_library(libnghttp2::nghttp2 ALIAS nghttp2_static)
+    if (BUILD_SHARED_LIBS)
+        install(TARGETS nghttp2 EXPORT grpcxx COMPONENT Development)
+        add_library(libnghttp2::nghttp2 ALIAS nghttp2)
+    else()
+        install(TARGETS nghttp2_static EXPORT grpcxx COMPONENT Development)
+        add_library(libnghttp2::nghttp2 ALIAS nghttp2_static)
+    endif()
 endif()
 
 # protobuf
