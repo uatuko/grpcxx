@@ -112,6 +112,7 @@ jobs:
           - cl
         variant:
           # [Nov. 2024] msvc throws C2894 errors when using libuv, need to investigate why
+          # Ref: https://github.com/uatuko/grpcxx/pull/46
           # - libuv
           - asio
         include:
