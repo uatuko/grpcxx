@@ -1,7 +1,7 @@
 # API Documentation
 
 > [!WARNING]
-> `grpcxx::detail` namespace is considered internal and may change without any warning.
+> `*::detail` namespaces are considered internal and may change without any warning.
 
 > [!IMPORTANT]
 > (`asio`) indicates it's only available when using Asio (i.e. compiled with `GRPCXX_USE_ASIO`).
@@ -170,16 +170,16 @@ _awaitable_ must be passed on to an `io_context` executor to serve requests.
 ------------------------------------------------- | ---
 `void run(const std::string_view &ip, int port);`                           | (1) (`asio`)
 `void run(std::string_view ip, int port, std::stop_token stop_token = {});` | (2) (`libuv`)
-`void run(int fd, std::stop_token stop_token = {});`                        | (3) (`libuv`)
+`void run(uv_os_sock_t sock, std::stop_token stop_token = {});`             | (3) (`libuv`)
 
 Listen and serve incoming gRPC requests.
 
 1. Start listening on `ip` and `port` for incoming gRPC connections and serve requests.
 2. Same as (1), but accepting an optional stop token to asynchronously signal the server to exit.
-3. Start listening on the provided file descriptor `fd`, which needs to be already bound to a network 
-   address. This is useful when the socket needs to have some additional properties set (such as 
-   keep-alive) and/or reused from the outside run context (such as is the case of the 
-   [systemd socket activation protocol](https://www.freedesktop.org/software/systemd/man/latest/sd_listen_fds.html#)).
+3. Start listening on the provided tcp socket `sock`, which needs to be already bound to a network
+   address. This is useful when the socket needs to have some additional properties set (such as
+   keep-alive) and/or reused from the outside run context (such as is the case of the
+   [systemd socket activation protocol](https://www.freedesktop.org/software/systemd/man/latest/sd_listen_fds.html)).
 
 > [!IMPORTANT]
 > If used with Asio, this will create and run an `io_context` executor on the main thread.

@@ -71,8 +71,19 @@ void server::prepare(std::string_view ip, int port) {
 void server::prepare(uv_os_sock_t sock) {
 	if (auto r = uv_tcp_open(&_handle, sock); r != 0) {
 		throw std::runtime_error(
-			std::string("Failed to open socket as a tcp handle:") + uv_strerror(r));
+			std::string("Failed to open socket as a tcp handle: ") + uv_strerror(r));
 	}
+
+#ifndef WIN32
+	// libuv windows implementation already checks the socket address family and calls
+	// uv_tcp_getsockname() within uv_tcp_open(), no need to check again.
+	sockaddr_storage name;
+	int              namelen = sizeof(name);
+	if (auto r = uv_tcp_getsockname(&_handle, (sockaddr *)&name, &namelen); r != 0) {
+		throw std::runtime_error(
+			std::string("Failed to retrieve bound address for socket: ") + uv_strerror(r));
+	}
+#endif
 
 	start_listening();
 }
