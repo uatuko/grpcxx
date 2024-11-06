@@ -40,7 +40,7 @@ session::~session() {
 
 void session::data(int32_t stream_id, std::string &&data) {
 	_data = std::move(data);
-	nghttp2_data_provider provider{
+	nghttp2_data_provider2 provider{
 		.source =
 			{
 				.ptr = &_data,
@@ -48,7 +48,7 @@ void session::data(int32_t stream_id, std::string &&data) {
 		.read_callback = read_cb,
 	};
 
-	if (auto r = nghttp2_submit_data(_session, NGHTTP2_FLAG_NONE, stream_id, &provider); r != 0) {
+	if (auto r = nghttp2_submit_data2(_session, NGHTTP2_FLAG_NONE, stream_id, &provider); r != 0) {
 		throw std::runtime_error(std::string("Failed to submit data: ") + nghttp2_strerror(r));
 	}
 }
@@ -126,7 +126,7 @@ void session::headers(int32_t stream_id, detail::headers hdrs) const {
 
 std::string_view session::pending() {
 	const uint8_t *bytes;
-	auto           n = nghttp2_session_mem_send(_session, &bytes);
+	auto           n = nghttp2_session_mem_send2(_session, &bytes);
 	if (n < 0) {
 		throw std::runtime_error(
 			std::string("Failed to retrieve pending session data: ") + nghttp2_strerror(n));
@@ -136,7 +136,7 @@ std::string_view session::pending() {
 }
 
 session::events_t session::read(std::string_view bytes) {
-	if (auto n = nghttp2_session_mem_recv(
+	if (auto n = nghttp2_session_mem_recv2(
 			_session, reinterpret_cast<const uint8_t *>(bytes.data()), bytes.size());
 		n < 0) {
 		throw std::runtime_error(
@@ -149,7 +149,7 @@ session::events_t session::read(std::string_view bytes) {
 	return events;
 }
 
-ssize_t session::read_cb(
+nghttp2_ssize session::read_cb(
 	nghttp2_session *session, int32_t stream_id, uint8_t *buf, size_t length, uint32_t *data_flags,
 	nghttp2_data_source *source, void *) {
 	auto *str = static_cast<std::string *>(source->ptr);

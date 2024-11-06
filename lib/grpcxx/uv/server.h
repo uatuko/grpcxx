@@ -36,7 +36,7 @@ public:
 	/// Please note that this will take ownership of the file
 	/// descriptor, and close it as necessary.
 	///
-	void run(int fd, std::stop_token stop_token = {});
+	void run(uv_os_sock_t sock, std::stop_token stop_token = {});
 
 	void run(std::string_view ip, int port, std::stop_token stop_token = {});
 
@@ -56,7 +56,7 @@ protected:
 	/// This is useful for integration in other event loops
 	/// (or nesting `uv_loop_t`s).
 	///
-	void prepare(int fd);
+	void prepare(uv_os_sock_t sock);
 
 	/// Lower-level API for integration in other event loops
 	///

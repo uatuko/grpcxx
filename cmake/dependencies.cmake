@@ -2,7 +2,7 @@ include(FetchContent)
 
 set(LIBUV_MINVERSION 1.46.0)
 set(BOOST_MINVERSION 1.81)
-set(NGHTTP2_MINVERSION 1.55.1)
+set(NGHTTP2_MINVERSION 1.64.0)
 set(PROTOBUF_MINVERSION 3.15.0)
 set(FMT_MINVERSION 10.1.1)
 set(GTEST_MINVERSION 1.15.2)
@@ -15,10 +15,16 @@ if(NOT GRPCXX_USE_ASIO)
             URL_HASH SHA256=7aa66be3413ae10605e1f5c9ae934504ffe317ef68ea16fdaa83e23905c681bd
         )
 
-        set(LIBUV_BUILD_SHARED OFF CACHE BOOL "Build libuv shared lib")
+        set(LIBUV_BUILD_SHARED ${BUILD_SHARED_LIBS} CACHE BOOL "Build libuv shared lib")
         FetchContent_MakeAvailable(libuv)
-        install(TARGETS uv_a EXPORT grpcxx COMPONENT Development)
-        add_library(libuv::uv ALIAS uv_a)
+
+        if (BUILD_SHARED_LIBS)
+            install(TARGETS uv EXPORT grpcxx COMPONENT Development)
+            add_library(libuv::uv ALIAS uv)
+        else()
+            install(TARGETS uv_a EXPORT grpcxx COMPONENT Development)
+            add_library(libuv::uv ALIAS uv_a)
+        endif()
     else()
         # Unfortunately the libuv CMakeLists.txt does not export
         # a version file. This is a bug in libuv.
@@ -100,22 +106,23 @@ if(NOT GRPCXX_HERMETIC_BUILD)
 else()
     FetchContent_Declare(nghttp2
         URL      https://github.com/nghttp2/nghttp2/releases/download/v${NGHTTP2_MINVERSION}/nghttp2-${NGHTTP2_MINVERSION}.tar.xz
-        URL_HASH SHA256=19490b7c8c2ded1cf7c3e3a54ef4304e3a7876ae2d950d60a81d0dc6053be419
+        URL_HASH SHA256=88bb94c9e4fd1c499967f83dece36a78122af7d5fb40da2019c56b9ccc6eb9dd
     )
 
+    if (NOT BUILD_SHARED_LIBS)
+        set(BUILD_STATIC_LIBS ON CACHE BOOL "Build libnghttp2 in static mode")
+    endif()
     set(ENABLE_LIB_ONLY   ON  CACHE BOOL "Build libnghttp2 only")
-    set(ENABLE_STATIC_LIB ON  CACHE BOOL "Build libnghttp2 in static mode")
-    set(ENABLE_SHARED_LIB OFF CACHE BOOL "Build libnghttp2 as a shared library")
     set(ENABLE_DOC        OFF CACHE BOOL "Build libnghttp2 documentation")
     FetchContent_MakeAvailable(nghttp2)
 
-    target_include_directories(nghttp2_static
-        PUBLIC
-            $<BUILD_INTERFACE:${nghttp2_SOURCE_DIR}/lib/includes>
-    )
-
-    install(TARGETS nghttp2_static EXPORT grpcxx COMPONENT Development)
-    add_library(libnghttp2::nghttp2 ALIAS nghttp2_static)
+    if (BUILD_SHARED_LIBS)
+        install(TARGETS nghttp2 EXPORT grpcxx COMPONENT Development)
+        add_library(libnghttp2::nghttp2 ALIAS nghttp2)
+    else()
+        install(TARGETS nghttp2_static EXPORT grpcxx COMPONENT Development)
+        add_library(libnghttp2::nghttp2 ALIAS nghttp2_static)
+    endif()
 endif()
 
 # protobuf
