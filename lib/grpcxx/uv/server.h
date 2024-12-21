@@ -2,7 +2,6 @@
 
 #include "../server_base.h"
 
-#include "loop.h"
 #include "scheduler.h"
 
 #include <uv.h>
