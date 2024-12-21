@@ -79,32 +79,23 @@ TEST(UvServer, run_with_existing_fd_and_stop) {
 }
 
 TEST(UvServer, run_with_external_loop) {
-	// Integration with other event loops, such as the one of libevent,
-	// is possible. Here we just pass a pre-built uv_loop_t
-	// which can be easily reused inside a different event loop.
-	uv_loop_t uv_loop;
-	uv_loop_init(&uv_loop);
-
-	class server : public ::grpcxx::uv::server {
-	public:
-		server(uv_loop_t &loop) : ::grpcxx::uv::server{loop, 1} { prepare("127.0.0.1", 0); }
-	};
-
-	server                server{uv_loop};
+	grpcxx::uv::server                server(1);
 	PingPong::ServiceImpl ping_pong;
 	PingPong::Service     service{ping_pong};
 	server.add(service);
+
+	uv_loop_t *uv_loop = server.listen("127.0.0.1", 0);
 
 	// TODO: we should do an exchange here, as soon as grpcxx also provides
 	// a client. So far this was tested manually via Postman
 	// (and UV_RUN_DEFAULT / UV_RUN_ONCE).
 
 	// Here we manually run the loop
-	uv_run(&uv_loop, UV_RUN_NOWAIT);
+	uv_run(uv_loop, UV_RUN_NOWAIT);
 
 	// Standard cleanup procedure for libuv
 	uv_walk(
-		&uv_loop,
+		uv_loop,
 		[](uv_handle_t *handle, void *) {
 			if (!uv_is_closing(handle)) {
 				uv_close(handle, nullptr);
@@ -112,9 +103,8 @@ TEST(UvServer, run_with_external_loop) {
 		},
 		nullptr);
 
-	while (uv_loop_close(&uv_loop) == UV_EBUSY) {
-		uv_run(&uv_loop, UV_RUN_ONCE);
+	while (uv_loop_close(uv_loop) == UV_EBUSY) {
+		uv_run(uv_loop, UV_RUN_ONCE);
 	}
 }
-
 } // namespace
