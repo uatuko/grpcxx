@@ -45,7 +45,7 @@ void message::bytes(std::string_view bytes) {
 }
 
 std::string_view message::data() const noexcept {
-	if (!_length || (_data.size() < _length.value())) {
+	if (!_length || (_data.size() != _length.value())) {
 		return {};
 	}
 
