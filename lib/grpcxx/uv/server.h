@@ -2,6 +2,7 @@
 
 #include "../server_base.h"
 
+#include "loop.h"
 #include "scheduler.h"
 
 #include <uv.h>
@@ -40,14 +41,6 @@ public:
 	void run(uv_os_sock_t sock, std::stop_token token = {});
 
 private:
-	struct loop_t {
-		loop_t() { uv_loop_init(&_loop); }
-
-		operator uv_loop_t *() noexcept { return &_loop; }
-
-		uv_loop_t _loop;
-	};
-
 	static constexpr int      TCP_LISTEN_BACKLOG         = 128;
 	static constexpr uint64_t SHUTDOWN_CHECK_INTERVAL_MS = 100;
 
@@ -59,11 +52,11 @@ private:
 	void listen();
 	void open(uv_os_sock_t sock);
 
-	loop_t          _loop;
 	uv_tcp_t        _handle;
 	uv_timer_t      _timer;
 	std::stop_token _token;
 
+	detail::loop      _loop;
 	detail::scheduler _scheduler;
 };
 } // namespace uv

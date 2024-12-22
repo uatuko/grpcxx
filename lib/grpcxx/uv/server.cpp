@@ -19,10 +19,6 @@ server::~server() noexcept {
 	if (!uv_is_closing(handle)) {
 		uv_close(handle, nullptr);
 	}
-
-	if (uv_loop_alive(_loop)) {
-		uv_stop(_loop);
-	}
 }
 
 void server::bind(std::string_view ip, int port) {
