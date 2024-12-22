@@ -115,6 +115,7 @@ void server::run(std::stop_token token) {
 				auto *s = static_cast<server *>(timer->data);
 				if (s->_token.stop_requested()) {
 					uv_timer_stop(timer);
+					uv_close(reinterpret_cast<uv_handle_t *>(timer), nullptr);
 					uv_close(reinterpret_cast<uv_handle_t *>(&s->_handle), nullptr);
 					uv_stop(timer->loop);
 				}
