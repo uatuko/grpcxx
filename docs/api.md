@@ -1,3 +1,4 @@
+<!-- omit in toc -->
 # API Documentation
 
 > [!WARNING]
@@ -17,10 +18,10 @@
   - [Member functions](#member-functions)
     - [(constructor)](#constructor)
     - [add](#add)
-    - [listen (`asio`)](#listen-asio)
+    - [listen](#listen)
     - [run](#run)
   - [Example (`asio`)](#example-asio)
-  - [Example (`libuv`)](#example-uv)
+  - [Example (`libuv`)](#example-libuv)
 - [`grpcxx::context`](#grpcxxcontext)
   - [Member types](#member-types)
   - [Member functions](#member-functions-1)
@@ -153,33 +154,45 @@ Add a gRPC service implementation to the server.
 1. Add a gRPC service implemented by `s`. `s` must stay in scope while the server in running. If two
 services are added with the same name, the second will be ignored.
 
-#### listen (`asio`)
+#### listen
 
 |||
 --------------------------------------- | ---
-`ASIO_NS::awaitable<void> listen(std::string_view ip, int port);` | (1)
+`ASIO_NS::awaitable<void> listen(std::string_view ip, int port);` | (1) (`asio`)
+`uv_loop_t *listen(std::string_view ip, int port);`               | (2) (`libuv`)
+`uv_loop_t *listen(uv_os_sock_t sock);`                           | (3) (`libuv`)
 
 Listen and prepare to serve incoming gRPC requests.
 
 1. Await on a coroutine executor and listen on `ip` and `port` for incoming gRPC connections. The returned
 _awaitable_ must be passed on to an `io_context` executor to serve requests.
+2. Listen on `ip` and `port` for incoming gRPC connections and returns a pointer to the event loop.
+The returned event loop can be used to run the loop externally or add external events to the loop.
+The loop will be stopped when the server instance is destroyed. No request will be served until the
+loop is run, either externally or by calling `run(std::stop_token token = {})`.
+3. Listen on an existing socket handler `sock` for incoming gRPC connections and returns a pointer
+to the event loop. The socket handler must be already bound to a network address and will be closed
+when the server stops. The event loop behaviour is same as (2).
 
 #### run
 
 |||
 ------------------------------------------------- | ---
-`void run(const std::string_view &ip, int port);`                           | (1) (`asio`)
-`void run(std::string_view ip, int port, std::stop_token stop_token = {});` | (2) (`libuv`)
-`void run(uv_os_sock_t sock, std::stop_token stop_token = {});`             | (3) (`libuv`)
+`void run(const std::string_view &ip, int port);`                      | (1) (`asio`)
+`void run(std::string_view ip, int port, std::stop_token token = {});` | (2) (`libuv`)
+`void run(uv_os_sock_t sock, std::stop_token token = {});`             | (3) (`libuv`)
+`void run(std::stop_token token = {});`                                | (4) (`libuv`)
 
 Listen and serve incoming gRPC requests.
 
 1. Start listening on `ip` and `port` for incoming gRPC connections and serve requests.
 2. Same as (1), but accepting an optional stop token to asynchronously signal the server to exit.
-3. Start listening on the provided tcp socket `sock`, which needs to be already bound to a network
-   address. This is useful when the socket needs to have some additional properties set (such as
-   keep-alive) and/or reused from the outside run context (such as is the case of the
-   [systemd socket activation protocol](https://www.freedesktop.org/software/systemd/man/latest/sd_listen_fds.html)).
+3. Start listening on the socket handler `sock` for incoming gRPC connections and serve requests.
+The socket handler must be already bound to a network address and will be closed when the server stops.
+This is useful when the socket needs to have some additional properties set (such as keep-alive) and/or
+reused outside the run context (e.g. when using [systemd socket activation protocol](https://www.freedesktop.org/software/systemd/man/latest/sd_listen_fds.html)).
+4. Run the server until a stop is requested or there aren't any active handlers in the event loop.
+This can be called after calling `listen(...)`.
 
 > [!IMPORTANT]
 > If used with Asio, this will create and run an `io_context` executor on the main thread.
