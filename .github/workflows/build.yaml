@@ -81,10 +81,9 @@ jobs:
       - name: Install dependencies
         run: |
           brew install \
-            protobuf@3 \
+            protobuf \
             ninja \
             ${{ matrix.dependencies }}
-          brew link protobuf@3
 
       - uses: actions/checkout@v4
       - uses: actions/cache@v4
