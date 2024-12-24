@@ -70,7 +70,7 @@ void server::listen() {
 	}
 }
 
-uv_loop_t *server::listen(uv_os_sock_t sock) {
+uv_loop_t *server::listen(uv_os_sock_t &&sock) {
 	open(sock);
 	listen();
 
@@ -127,7 +127,7 @@ void server::run(std::stop_token token) {
 	uv_run(_loop, UV_RUN_DEFAULT);
 }
 
-void server::run(uv_os_sock_t sock, std::stop_token token) {
+void server::run(uv_os_sock_t &&sock, std::stop_token token) {
 	open(sock);
 	listen();
 	run(std::move(token));

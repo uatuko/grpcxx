@@ -100,9 +100,9 @@ TEST(UvServer, run_with_existing_fd_and_stop) {
 	PingPong::Service     service{ping_pong};
 	server.add(service);
 
-	auto fd  = sockfd.release(); // the server will take ownership, and it will close it.
+	// The server will take ownership of sockfd, and it will close it.
 	auto thr = std::jthread{
-		[&server, fd](std::stop_token stop_token) { server.run(fd, std::move(stop_token)); }};
+		[&server, &sockfd](std::stop_token stop_token) { server.run(sockfd.release(), std::move(stop_token)); }};
 
 	// TODO: we should do an exchange here, as soon as grpcxx also provides
 	// a client. So far this was tested manually via Postman.

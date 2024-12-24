@@ -25,7 +25,7 @@ public:
 	virtual ~server() noexcept;
 
 	uv_loop_t *listen(std::string_view ip, int port);
-	uv_loop_t *listen(uv_os_sock_t sock);
+	uv_loop_t *listen(uv_os_sock_t &&sock);
 
 	void run(std::string_view ip, int port, std::stop_token token = {});
 	void run(std::stop_token token = {});
@@ -38,7 +38,7 @@ public:
 	///
 	/// Please note that this will take ownership of the socket handle, and close it as necessary.
 	///
-	void run(uv_os_sock_t sock, std::stop_token token = {});
+	void run(uv_os_sock_t &&sock, std::stop_token token = {});
 
 private:
 	static constexpr int      TCP_LISTEN_BACKLOG         = 128;

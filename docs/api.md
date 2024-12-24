@@ -160,7 +160,7 @@ services are added with the same name, the second will be ignored.
 --------------------------------------- | ---
 `ASIO_NS::awaitable<void> listen(std::string_view ip, int port);` | (1) (`asio`)
 `uv_loop_t *listen(std::string_view ip, int port);`               | (2) (`libuv`)
-`uv_loop_t *listen(uv_os_sock_t sock);`                           | (3) (`libuv`)
+`uv_loop_t *listen(uv_os_sock_t &&sock);`                         | (3) (`libuv`)
 
 Listen and prepare to serve incoming gRPC requests.
 
@@ -180,7 +180,7 @@ when the server stops. The event loop behaviour is same as (2).
 ------------------------------------------------- | ---
 `void run(const std::string_view &ip, int port);`                      | (1) (`asio`)
 `void run(std::string_view ip, int port, std::stop_token token = {});` | (2) (`libuv`)
-`void run(uv_os_sock_t sock, std::stop_token token = {});`             | (3) (`libuv`)
+`void run(uv_os_sock_t &&sock, std::stop_token token = {});`           | (3) (`libuv`)
 `void run(std::stop_token token = {});`                                | (4) (`libuv`)
 
 Listen and serve incoming gRPC requests.
