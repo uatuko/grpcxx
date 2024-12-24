@@ -50,7 +50,7 @@ private:
 
 	void bind(std::string_view ip, int port);
 	void listen();
-	void open(uv_os_sock_t sock);
+	void open(uv_os_sock_t &&sock);
 
 	uv_tcp_t        _handle;
 	uv_timer_t      _timer;

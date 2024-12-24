@@ -71,7 +71,7 @@ void server::listen() {
 }
 
 uv_loop_t *server::listen(uv_os_sock_t &&sock) {
-	open(sock);
+	open(std::move(sock));
 	listen();
 
 	return _loop;
@@ -84,7 +84,7 @@ uv_loop_t *server::listen(std::string_view ip, int port) {
 	return _loop;
 }
 
-void server::open(uv_os_sock_t sock) {
+void server::open(uv_os_sock_t &&sock) {
 	if (auto r = uv_tcp_open(&_handle, sock); r != 0) {
 		throw std::runtime_error(
 			std::string("Failed to open socket as a tcp handle: ") + uv_strerror(r));
@@ -128,7 +128,7 @@ void server::run(std::stop_token token) {
 }
 
 void server::run(uv_os_sock_t &&sock, std::stop_token token) {
-	open(sock);
+	open(std::move(sock));
 	listen();
 	run(std::move(token));
 }
