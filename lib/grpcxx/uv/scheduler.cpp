@@ -26,6 +26,11 @@ scheduler::~scheduler() {
 			t.join();
 		}
 	}
+
+	auto *handle = reinterpret_cast<uv_handle_t *>(&_async);
+	if (uv_is_active(handle)) {
+		uv_close(handle, nullptr);
+	}
 }
 
 bool scheduler::enqueue(std::coroutine_handle<> h) noexcept {
