@@ -45,7 +45,7 @@ void message::bytes(std::string_view bytes) {
 }
 
 std::string_view message::data() const noexcept {
-	if (!_length || (_data.size() < _length.value())) {
+	if (!_length || (_data.size() != _length.value())) {
 		return {};
 	}
 
@@ -65,7 +65,7 @@ void message::parse() {
 
 	_compressed = _prefix[0];
 	_length     = std::make_optional(
-        (_prefix[1] << 24) | (_prefix[2] << 16) | (_prefix[3] << 8) | (_prefix[4]));
+        (_prefix[1] << 24) | (_prefix[2] << 16) | (_prefix[3] << 8) | (_prefix[4] & 0xff));
 
 	const std::size_t cap = _length.value() + 5;
 	if (_data.capacity() < cap) {
