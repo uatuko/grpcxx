@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.6.0 - 7th January, 2025
+
+### 🔦 Spotlight
+Server can be started using a pre-initialised socket handler and stopped using a `std::stop_token` (when using libuv).
+
+### What's Changed
+* Handle UV server shutdown and allow socket activation by @tchernobog in https://github.com/uatuko/grpcxx/pull/42
+* Allow constructing a `grpcxx::server` using an external `uv_loop_t` by @tchernobog in https://github.com/uatuko/grpcxx/pull/44
+* Update GitHub workflows by @uatuko in https://github.com/uatuko/grpcxx/pull/43
+* Windows builds by @uatuko in https://github.com/uatuko/grpcxx/pull/46
+* Make libuv server api semantically similar to asio by @uatuko in https://github.com/uatuko/grpcxx/pull/52
+* Fix to ensure length prefixed messages are parsed correctly by @uatuko in https://github.com/uatuko/grpcxx/pull/51
+* Update build workflow by @uatuko in https://github.com/uatuko/grpcxx/pull/53
+
+**Full Changelog**: https://github.com/uatuko/grpcxx/compare/v0.5.1...v0.6.0
+
+
 ## v0.5.1 - 28th October, 2024
 
 ### What's Changed
