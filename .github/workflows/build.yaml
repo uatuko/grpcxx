@@ -18,13 +18,13 @@ jobs:
       fail-fast: false
       matrix:
         compiler:
-          - g++
           - clang++
+          - g++
         container:
           - ubuntu:24.04
         variant:
-          - libuv
           - asio
+          - libuv
         include:
           - compiler: g++
             dependencies: g++
@@ -53,6 +53,7 @@ jobs:
           cmake -B .build -G Ninja \
             -DCMAKE_CXX_COMPILER=${{ matrix.compiler }} \
             -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_SHARED_LIBS=ON \
             -DGRPCXX_BUILD_TESTING=OFF \
             ${{ matrix.cmake_args }}
       - name: Build
@@ -67,11 +68,11 @@ jobs:
       fail-fast: false
       matrix:
         compiler:
-          - g++
           - clang++
+          - g++
         variant:
-          - libuv
           - boost_asio
+          - libuv
         include:
           - variant: boost_asio
             cmake_args: -DGRPCXX_USE_ASIO=ON
@@ -96,6 +97,7 @@ jobs:
           cmake -B .build -G Ninja \
             -DCMAKE_CXX_COMPILER=${{ matrix.compiler }} \
             -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_SHARED_LIBS=ON \
             -DGRPCXX_BUILD_TESTING=OFF \
             ${{ matrix.cmake_args }}
       - name: Build
@@ -149,6 +151,7 @@ jobs:
           cmake -B .build -G Ninja `
             -DCMAKE_CXX_COMPILER=${{ matrix.compiler }} `
             -DCMAKE_BUILD_TYPE=Release `
+            -DBUILD_SHARED_LIBS=ON `
             -DGRPCXX_BUILD_EXAMPLES=OFF `
             -DGRPCXX_BUILD_EXPERIMENTS=OFF `
             -DGRPCXX_BUILD_TESTING=OFF `
