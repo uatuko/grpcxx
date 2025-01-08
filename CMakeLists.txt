@@ -9,7 +9,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 
-option(BUILD_SHARED_LIBS "Build grpcxx as a shared library" ON)
 option(GRPCXX_HERMETIC_BUILD "Fetch and build all dependencies instead of relying on system libraries" ON)
 option(GRPCXX_USE_ASIO "Use asio instead of libuv for I/O and event loop" OFF)
 
