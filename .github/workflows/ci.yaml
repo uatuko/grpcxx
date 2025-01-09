@@ -56,6 +56,7 @@ jobs:
           cmake -B .build -G Ninja \
             -DCMAKE_CXX_COMPILER=${{ matrix.compiler }} \
             -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_SHARED_LIBS=OFF \
             -DGRPCXX_BUILD_EXAMPLES=OFF \
             -DGRPCXX_BUILD_EXPERIMENTS=OFF \
             ${{ matrix.cmake_args }}
