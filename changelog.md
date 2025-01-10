@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.6.1 - 10th January, 2025
+
+### What's Changed
+* Avoid defining `BUILD_SHARED_LIBS` cmake variable by @uatuko in https://github.com/uatuko/grpcxx/pull/54
+
+**Full Changelog**: https://github.com/uatuko/grpcxx/compare/v0.6.0...v0.6.1
+
+
 ## v0.6.0 - 7th January, 2025
 
 ### 🔦 Spotlight
