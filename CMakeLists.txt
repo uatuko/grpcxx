@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.27)
-project(grpcxx VERSION 0.6.1 LANGUAGES CXX)
+project(grpcxx VERSION 0.6.2 LANGUAGES CXX)
 
 cmake_policy(SET CMP0135 NEW) # CMake 3.24
 cmake_policy(SET CMP0144 NEW) # CMake 3.27

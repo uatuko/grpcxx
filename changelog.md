@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.6.2 - 22nd June, 2025
+
+### What's changed
+
+* Make `PROTOBUF_MINVERSION` CMake variable user-settable (https://github.com/uatuko/grpcxx/issues/56)
+
+**Full Changelog**: https://github.com/uatuko/grpcxx/compare/v0.6.1...v0.6.2
+
+
 ## v0.6.1 - 10th January, 2025
 
 ### What's Changed
