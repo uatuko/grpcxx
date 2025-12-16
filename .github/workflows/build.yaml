@@ -78,6 +78,8 @@ jobs:
           - variant: boost_asio
             cmake_args: -DGRPCXX_USE_ASIO=ON
             dependencies: boost
+          - variant: libuv
+            cmake_args: -DCMAKE_POLICY_VERSION_MINIMUM=3.5
 
     steps:
       - name: Install dependencies
