@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.6.3 - 16th December, 2025
+
+### What's Changed
+
+* Fix string concatenation by @uatuko in https://github.com/uatuko/grpcxx/pull/59
+
+**Full Changelog**: https://github.com/uatuko/grpcxx/compare/v0.6.2...v0.6.3
+
+
 ## v0.6.2 - 22nd June, 2025
 
 ### What's changed
