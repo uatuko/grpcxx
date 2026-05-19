@@ -41,7 +41,7 @@ You can find a bit more detailed documentation in [docs/](docs/README.md).
 
 ### Prerequisites
 
-* [CMake](https://cmake.org) (>= 3.23)
+* [CMake](https://cmake.org) (>= 3.27)
 * [Protobuf](https://protobuf.dev) (>= 3.15)
 
 ### Installing
@@ -53,8 +53,8 @@ e.g.
 ```cmake
 # grpcxx
 FetchContent_Declare(grpcxx
-  URL      https://github.com/uatuko/grpcxx/archive/refs/tags/v0.1.3.tar.gz
-  URL_HASH SHA256=441ca21bed3c0413623440c1608da44e60931631af1dc609c18e4a955f8cb3a5
+  URL      https://github.com/uatuko/grpcxx/archive/refs/tags/v0.7.0.tar.gz
+  URL_HASH SHA256=0bd8ab6e7a5df3206bc5c6fecd6c197014ffd08292ed9aa36fc252bf65db3db6
 )
 FetchContent_MakeAvailable(grpcxx)
 ```
